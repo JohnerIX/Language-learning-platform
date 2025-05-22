@@ -1,0 +1,32 @@
+body {
+    background-color: #f8f9fa;
+}
+body.dark-mode {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+body.dark-mode nav {
+    background-color: #1e1e1e;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1.5rem;
+}
+
+.g_id_signin {
+    margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .card-body {
+        padding: 1.5rem;
+    }
+}
