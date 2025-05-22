@@ -164,6 +164,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_course'])) {
                         <select class="form-select" id="course_language" name="course_language" required>
                             <option value="">Select language</option>
                             <option value="Luganda" <?= $courseData['language'] === 'Luganda' ? 'selected' : '' ?>>Luganda</option>
+                            <option value="Runyoro" <?= $courseData['language'] === 'Runyoro' ? 'selected' : '' ?>>Runyoro</option>
+                            <option value="Lusoga" <?= $courseData['language'] === 'Lusoga' ? 'selected' : '' ?>>Lusoga</option>
+                            <option value="Rukiga" <?= $courseData['language'] === 'Rukiga' ? 'selected' : '' ?>>Rukiga</option>
+                            <option value="Lugisu" <?= $courseData['language'] === 'Lugisu' ? 'selected' : '' ?>>Lugisu</option>
                             <option value="Runyankole" <?= $courseData['language'] === 'Runyankole' ? 'selected' : '' ?>>Runyankole</option>
                             <option value="Acholi" <?= $courseData['language'] === 'Acholi' ? 'selected' : '' ?>>Acholi</option>
                         </select>

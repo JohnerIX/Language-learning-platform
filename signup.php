@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $phone = preg_replace('/[^0-9+]/', '', sanitize_input($_POST['phone']));
         $password = $_POST['password'];
         $role = isset($_POST['role']) ? sanitize_input($_POST['role']) : 'learner'; // Get selected role
+        
 
         // Validate inputs
         $errors = [];
@@ -124,16 +125,16 @@ require __DIR__ . '/includes/header.php';
                             
                             <!-- Role Selection -->
                             <div class="btn-group w-100 mb-3" role="group">
-                                <input type="radio" class="btn-check" name="role" id="learner" value="learner" autocomplete="off" checked>
-                                <label class="btn btn-outline-dark" for="learner">
-                                    <i class="fas fa-user-graduate me-2"></i>Learner
-                                </label>
-                                
-                                <input type="radio" class="btn-check" name="role" id="tutor" value="tutor" autocomplete="off">
-                                <label class="btn btn-outline-dark" for="tutor">
-                                    <i class="fas fa-chalkboard-teacher me-2"></i>Tutor
-                                </label>
-                            </div>
+    <input type="radio" class="btn-check" name="role" id="learner" value="learner" autocomplete="off" checked>
+    <label class="btn btn-outline-dark" for="learner">
+        <i class="fas fa-user-graduate me-2"></i>Learner
+    </label>
+    
+    <input type="radio" class="btn-check" name="role" id="tutor" value="tutor" autocomplete="off">
+    <label class="btn btn-outline-dark" for="tutor">
+        <i class="fas fa-chalkboard-teacher me-2"></i>Tutor
+    </label>
+</div>
 
                             <div class="mb-3">
                                 <label for="name" class="form-label">Full Name</label>

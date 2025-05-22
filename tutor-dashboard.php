@@ -86,7 +86,7 @@ $totalEarnings = array_sum(array_column($courses, 'earnings'));
                                     </span>
                                 </td>
                                 <td><?= $course['enrollments'] ?></td>
-                                <td>UGX <?= number_format($course['earnings']) ?></td>
+                                <td>UGX <?= number_format($course['earnings'] ?? 0, 2) ?></td>
                                 <td>
                                     <a href="edit-course.php?id=<?= $course['course_id'] ?>" 
                                        class="btn btn-sm btn-outline-primary">
