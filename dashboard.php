@@ -40,27 +40,6 @@ $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
 $recommended_courses = $stmt->fetchAll();
 ?>
 
-<!-- Udemy-style Top Navigation -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="/">Learn Ugandan</a>
-        <div class="ms-auto d-flex">
-            <a href="my-courses.php" class="btn btn-sm btn-outline-light me-2">
-                <i class="fas fa-book-open"></i> My Courses
-            </a>
-            <div class="dropdown">
-                <button class="btn btn-sm btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="fas fa-user-circle"></i> <?= htmlspecialchars($_SESSION['user_email']) ?>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="profile.php">Profile</a></li>
-                    <li><a class="dropdown-item" href="logout.php">Logout</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</nav>
-
 <div class="container mb-5">
     <!-- Hero Welcome Section -->
     <div class="p-5 mb-4 bg-light rounded-3">
@@ -94,9 +73,10 @@ $recommended_courses = $stmt->fetchAll();
                         </div>
                         <div class="card-footer bg-white">
                             <a href="course.php?id=<?= $course['course_id'] ?>" 
-                               class="btn btn-primary w-100">
-                                Continue
-                            </a>
+   class="btn btn-success w-100">
+    Continue
+</a>
+
                         </div>
                     </div>
                 </div>

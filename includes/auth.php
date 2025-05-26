@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
-if ($_POST['login']) {
+$login_required = isset($_GET['login']) ? true : false;
+if ($login_required) {
   $email = $_POST['email'];
   $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
   $stmt->execute([$email]);
