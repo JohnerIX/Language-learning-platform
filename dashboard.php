@@ -72,7 +72,7 @@ $recommended_courses = $stmt->fetchAll();
                             </small>
                         </div>
                         <div class="card-footer bg-white">
-                            <a href="course.php?id=<?= $course['course_id'] ?>" 
+                            <a href="learn.php?id=<?= $course['course_id'] ?>" 
    class="btn btn-success w-100">
     Continue
 </a>

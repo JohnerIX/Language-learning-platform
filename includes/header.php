@@ -180,8 +180,10 @@ if (session_status() === PHP_SESSION_NONE) {
                     <div class="dropdown-content">
                         <a href="profile.php">My Profile</a>
                         <a href="logout.php">Logout</a>
-                        <?php if ($_SESSION['user_role'] === 'admin'): ?>
-                            <a href="admin-dashboard.php">Admin Panel</a>
+                        <?php if ($_SESSION['user_role'] === 'learner'): ?>
+                            <a href="dashboard.php">My Learning</a>
+                        <?php elseif ($_SESSION['user_role'] === 'admin'): ?>
+                            <a href="admin-dashboard.php">Admin Dashboard</a>
                         <?php elseif ($_SESSION['user_role'] === 'tutor'): ?>
                             <a href="tutor-dashboard.php">Tutor Dashboard</a>
                         <?php endif; ?>

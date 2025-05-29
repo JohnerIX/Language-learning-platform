@@ -224,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                                         </small>
                                     </div>
                                     <div class="card-footer bg-transparent">
-                                        <a href="course.php?id=<?= $course['course_id'] ?>" 
+                                        <a href="learn.php?id=<?= $course['course_id'] ?>" 
                                            class="btn btn-sm btn-outline-primary w-100">
                                             Continue Learning
                                         </a>

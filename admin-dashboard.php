@@ -7,7 +7,7 @@ require __DIR__ . '/includes/header.php';
 
 // Get system statistics
 $stats = [
-    'total_learners' => $conn->query("SELECT COUNT(*) FROM users WHERE role='learner' AND status='approved'")->fetchColumn(),
+    'total_learners' => $conn->query("SELECT COUNT(*) FROM users WHERE role='learner' AND is_active=1")->fetchColumn(),
     'total_tutors' => $conn->query("SELECT COUNT(*) FROM users WHERE role='tutor' AND status='approved'")->fetchColumn(),
     'pending_tutors' => $conn->query("SELECT COUNT(*) FROM users WHERE role='tutor' AND status='pending'")->fetchColumn(),
     'total_courses' => $conn->query("SELECT COUNT(*) FROM courses WHERE status='published'")->fetchColumn(),
