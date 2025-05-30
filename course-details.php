@@ -143,9 +143,20 @@ require __DIR__ . '/includes/header.php';
         <div class="col-md-8">
             <!-- Course Thumbnail -->
             <div class="mb-4 ratio ratio-16x9">
-                <img src="<?= htmlspecialchars($course['thumbnail_url'] ?? 'assets/default-course.jpg') ?>" 
+                <?php
+                $detail_thumbnail_url = $course['thumbnail_url'] ?? 'images/default-course.jpg'; // Standardized fallback
+                if (!empty($course['thumbnail_url']) && !filter_var($course['thumbnail_url'], FILTER_VALIDATE_URL) && strpos($course['thumbnail_url'], '/') === false) {
+                    // If it's not a URL and doesn't contain a slash, assume it's a filename in uploads/course_thumbs/
+                    $detail_thumbnail_url = 'uploads/course_thumbs/' . $course['thumbnail_url'];
+                } elseif (empty($course['thumbnail_url'])) {
+                    $detail_thumbnail_url = 'images/default-course.jpg'; // Explicit fallback
+                }
+                ?>
+                <img src="<?= htmlspecialchars($detail_thumbnail_url) ?>" 
                      class="img-fluid rounded" 
-                     alt="<?= htmlspecialchars($course['title']) ?>">
+                     alt="<?= htmlspecialchars($course['title']) ?>"
+                     style="background-color: #f0f0f0;"
+                     onerror="this.onerror=null; this.src='images/default-course.jpg';"> // JS fallback for broken images
             </div>
             
             <!-- Course Description -->

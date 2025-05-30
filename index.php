@@ -1,3 +1,31 @@
+<?php
+require_once __DIR__ . '/includes/config.php'; // Ensures $conn is available
+
+$featured_courses = [];
+$fetch_error = null;
+try {
+    // Check if $conn is set and not null (it should be by config.php)
+    if (isset($conn)) {
+        $sql = "
+            SELECT c.course_id, c.title, c.description, c.thumbnail_url, u.name AS tutor_name, c.is_featured
+            FROM courses c
+            JOIN users u ON c.tutor_id = u.user_id /* Ensure users table has user_id as primary key */
+            WHERE c.status = 'published'
+            ORDER BY c.is_featured DESC, c.created_at DESC
+            LIMIT 6
+        ";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $featured_courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $fetch_error = "Database connection is not available.";
+        error_log("Error in index.php: Database connection (\$conn) not available after including config.php.");
+    }
+} catch (PDOException $e) {
+    $fetch_error = "Error fetching courses."; // User-friendly message
+    error_log("Error fetching courses in index.php: " . $e->getMessage());
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -192,6 +220,62 @@
         </div>
         <button class="slider-arrow next-arrow">&#10095;</button>
     </div>
+
+    <!-- Featured Courses Section -->
+    <section class="featured-courses py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Featured Courses</h2>
+            <?php if ($fetch_error): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($fetch_error) ?></div>
+            <?php elseif (empty($featured_courses)): ?>
+                <div class="alert alert-info text-center">
+                    No featured courses available at the moment. Please <a href="courses.php">browse all courses</a>.
+                </div>
+            <?php else: ?>
+                <div class="row">
+                    <?php foreach ($featured_courses as $course): ?>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                <?php
+                                $thumbnail_url = $course['thumbnail_url'] ?? 'images/default-course.jpg';
+                                if (!empty($course['thumbnail_url']) && !filter_var($course['thumbnail_url'], FILTER_VALIDATE_URL) && strpos($course['thumbnail_url'], '/') === false) {
+                                    $thumbnail_url = 'uploads/course_thumbs/' . $course['thumbnail_url'];
+                                } elseif (empty($course['thumbnail_url'])) {
+                                    $thumbnail_url = 'images/default-course.jpg';
+                                }
+                                ?>
+                                <img src="<?= htmlspecialchars($thumbnail_url) ?>" 
+                                     class="card-img-top" 
+                                     alt="<?= htmlspecialchars($course['title']) ?>"
+                                     style="height: 200px; object-fit: cover; background-color: #f0f0f0;"
+                                     onerror="this.onerror=null; this.src='images/default-course.jpg';">
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
+                                    <?php if (!empty($course['tutor_name'])): ?>
+                                        <p class="text-muted small mb-2">
+                                            By <?= htmlspecialchars($course['tutor_name']) ?>
+                                        </p>
+                                    <?php endif; ?>
+                                    <p class="card-text flex-grow-1">
+                                        <?= htmlspecialchars(substr($course['description'], 0, 100)) ?>...
+                                    </p>
+                                    <div class="mt-auto">
+                                        <a href="course-details.php?id=<?= $course['course_id'] ?>" class="btn btn-primary w-100">
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="text-center mt-4">
+                    <a href="courses.php" class="btn btn-outline-primary">View All Courses</a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
 
     <section class="categories" id="topics">
         <div class="cont"><h2>Beginner level lessons</h2> </div>

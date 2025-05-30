@@ -87,11 +87,24 @@ try {
         <div class="row">
             <?php foreach ($courses as $course): ?>
             <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <img src="<?= htmlspecialchars($course['thumbnail_url'] ?? 'images/default-course.jpg') ?>" 
+                <div class="card h-100 shadow-sm course-card">
+                    <?php if ($course['is_featured']): ?>
+                        <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2" style="z-index:10;">Featured</span>
+                    <?php endif; ?>
+                    <?php
+                    $thumbnail_url = $course['thumbnail_url'] ?? 'images/default-course.jpg';
+                    if (!empty($course['thumbnail_url']) && !filter_var($course['thumbnail_url'], FILTER_VALIDATE_URL) && strpos($course['thumbnail_url'], '/') === false) {
+                        // If it's not a URL and doesn't contain a slash, assume it's a filename in uploads/course_thumbs/
+                        $thumbnail_url = 'uploads/course_thumbs/' . $course['thumbnail_url'];
+                    } elseif (empty($course['thumbnail_url'])) {
+                        $thumbnail_url = 'images/default-course.jpg'; // Explicit fallback
+                    }
+                    ?>
+                    <img src="<?= htmlspecialchars($thumbnail_url) ?>" 
                          class="card-img-top" 
                          alt="<?= htmlspecialchars($course['title']) ?>"
-                         style="height: 200px; object-fit: cover;">
+                         style="height: 200px; object-fit: cover; background-color: #f0f0f0;"
+                         onerror="this.onerror=null; this.src='images/default-course.jpg';"> // JS fallback for broken images
                     
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
@@ -109,19 +122,18 @@ try {
                                     <i class="fas fa-play-circle"></i> Start Learning
                                 </a>
                             <?php else: ?>
-                                <a href="subscribe.php?course_id=<?= $course['course_id'] ?>" 
+                                <a href="course-details.php?id=<?= $course['course_id'] ?>" 
                                    class="btn btn-primary w-100">
-                                    <i class="fas fa-plus-circle"></i> Subscribe
+                                    <i class="fas fa-info-circle"></i> View Details & Subscribe
                                 </a>
                             <?php endif; ?>
                         </div>
                     </div>
                     
-                    <div class="card-footer bg-white">
-                        <a href="course-details.php?id=<?= $course['course_id'] ?>" 
-                           class="text-decoration-none">
-                            View full details <i class="fas fa-arrow-right"></i>
-                        </a>
+                    <div class="card-footer bg-transparent border-top-0 text-center">
+                         <small class="text-muted">
+                            Price: <?= htmlspecialchars($course['price'] > 0 ? '$' . number_format($course['price'], 2) : 'Free') ?>
+                        </small>
                     </div>
                 </div>
             </div>
@@ -129,5 +141,13 @@ try {
         </div>
     <?php endif; ?>
 </div>
+
+<style>
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15)!important;
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+}
+</style>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>
