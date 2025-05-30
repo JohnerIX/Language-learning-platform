@@ -140,6 +140,7 @@
                     <p>Fill out the form below and we'll get back to you as soon as possible.</p>
                     
                     <form id="contactForm" class="contact-form" action="process_contact.php" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                         <div class="form-group">
                             <label for="name">Full Name <span class="required">*</span></label>
                             <input type="text" id="name" name="name" placeholder="Your full name" required>
