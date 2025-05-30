@@ -144,19 +144,42 @@ require __DIR__ . '/includes/header.php';
             <!-- Course Thumbnail -->
             <div class="mb-4 ratio ratio-16x9">
                 <?php
-                $detail_thumbnail_url = $course['thumbnail_url'] ?? 'images/default-course.jpg'; // Standardized fallback
-                if (!empty($course['thumbnail_url']) && !filter_var($course['thumbnail_url'], FILTER_VALIDATE_URL) && strpos($course['thumbnail_url'], '/') === false) {
-                    // If it's not a URL and doesn't contain a slash, assume it's a filename in uploads/course_thumbs/
-                    $detail_thumbnail_url = 'uploads/course_thumbs/' . $course['thumbnail_url'];
-                } elseif (empty($course['thumbnail_url'])) {
-                    $detail_thumbnail_url = 'images/default-course.jpg'; // Explicit fallback
+                $raw_thumbnail_url_detail = $course['thumbnail_url'] ?? null;
+                $final_thumbnail_url_detail = 'images/default-course.jpg'; // Default fallback
+
+                if (!empty($raw_thumbnail_url_detail)) {
+                    if (preg_match('~^https?://~i', $raw_thumbnail_url_detail)) {
+                        $final_thumbnail_url_detail = $raw_thumbnail_url_detail;
+                    } elseif (strpos($raw_thumbnail_url_detail, 'uploads/course_thumbs/') === 0) {
+                        $final_thumbnail_url_detail = $raw_thumbnail_url_detail;
+                    } elseif (strpos($raw_thumbnail_url_detail, '/') === false) {
+                        $final_thumbnail_url_detail = 'uploads/course_thumbs/' . $raw_thumbnail_url_detail;
+                    } else {
+                        if (strpos($raw_thumbnail_url_detail, '/') === 0) { // Starts with a slash - root relative
+                             $final_thumbnail_url_detail = $raw_thumbnail_url_detail;
+                        } else { // A relative path like 'folder/image.jpg' - this is unlikely.
+                             $final_thumbnail_url_detail = 'uploads/course_thumbs/' . $raw_thumbnail_url_detail;
+                        }
+                    }
+                }
+                $final_thumbnail_url_detail = str_replace('//', '/', $final_thumbnail_url_detail);
+                // Check if after potential construction, it's still a valid-looking path or URL
+                if (strpos($final_thumbnail_url_detail, 'uploads/course_thumbs/') === 0 && $final_thumbnail_url_detail !== 'uploads/course_thumbs/') {
+                    // Path is fine or constructed
+                } elseif (!preg_match('~^https?://~i', $final_thumbnail_url_detail)) { // Not a URL and not a valid constructed path
+                    $final_thumbnail_url_detail = 'images/default-course.jpg'; // Reset to default if construction is suspect
+                }
+                
+                // Final check for empty or base path only
+                if (empty($final_thumbnail_url_detail) || $final_thumbnail_url_detail === 'uploads/course_thumbs/') {
+                    $final_thumbnail_url_detail = 'images/default-course.jpg';
                 }
                 ?>
-                <img src="<?= htmlspecialchars($detail_thumbnail_url) ?>" 
+                <img src="<?= htmlspecialchars($final_thumbnail_url_detail) ?>" 
                      class="img-fluid rounded" 
                      alt="<?= htmlspecialchars($course['title']) ?>"
                      style="background-color: #f0f0f0;"
-                     onerror="this.onerror=null; this.src='images/default-course.jpg';"> // JS fallback for broken images
+                     onerror="this.onerror=null; this.src='images/default-course.jpg';">
             </div>
             
             <!-- Course Description -->

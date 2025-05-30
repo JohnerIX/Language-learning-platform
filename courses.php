@@ -92,20 +92,52 @@ try {
                         <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2" style="z-index:10;">Featured</span>
                     <?php endif; ?>
                     <?php
-                    $thumbnail_url = $course['thumbnail_url'] ?? 'images/default-course.jpg';
-                    if (!empty($course['thumbnail_url']) && !filter_var($course['thumbnail_url'], FILTER_VALIDATE_URL) && strpos($course['thumbnail_url'], '/') === false) {
-                        // If it's not a URL and doesn't contain a slash, assume it's a filename in uploads/course_thumbs/
-                        $thumbnail_url = 'uploads/course_thumbs/' . $course['thumbnail_url'];
-                    } elseif (empty($course['thumbnail_url'])) {
-                        $thumbnail_url = 'images/default-course.jpg'; // Explicit fallback
+                    $raw_thumbnail_url = $course['thumbnail_url'] ?? null;
+                    $final_thumbnail_url = 'images/default-course.jpg'; // Default fallback
+
+                    if (!empty($raw_thumbnail_url)) {
+                        if (preg_match('~^https?://~i', $raw_thumbnail_url)) {
+                            // It's a full URL
+                            $final_thumbnail_url = $raw_thumbnail_url;
+                        } elseif (strpos($raw_thumbnail_url, 'uploads/course_thumbs/') === 0) {
+                            // Already includes the full base path
+                            $final_thumbnail_url = $raw_thumbnail_url;
+                        } elseif (strpos($raw_thumbnail_url, '/') === false) {
+                            // Assumed to be a filename, prepend the base path
+                            $final_thumbnail_url = 'uploads/course_thumbs/' . $raw_thumbnail_url;
+                        } else {
+                            // It has slashes but isn't a full URL and doesn't start with known path,
+                            // This case is ambiguous. For now, assume it might be a relative path that's correct
+                            // or an incorrect path. Fallback will eventually catch it if broken.
+                            // Or, if paths like '/uploads/course_thumbs/file.jpg' are possible from DB:
+                            if (strpos($raw_thumbnail_url, '/') === 0) { // Starts with a slash - root relative
+                                 $final_thumbnail_url = $raw_thumbnail_url;
+                            } else { // A relative path like 'folder/image.jpg' - this is unlikely for thumbnails from a central dir.
+                                 // Defaulting to prepending, but this case might need review based on actual DB values.
+                                 $final_thumbnail_url = 'uploads/course_thumbs/' . $raw_thumbnail_url;
+                            }
+                        }
+                    }
+                    // Ensure the path doesn't have double slashes if $raw_thumbnail_url might start with one
+                    // and we prepend. Example: 'uploads/course_thumbs/' . '/filename.jpg'
+                    $final_thumbnail_url = str_replace('//', '/', $final_thumbnail_url);
+                    if (strpos($final_thumbnail_url, 'uploads/course_thumbs/') === 0 && $final_thumbnail_url !== 'uploads/course_thumbs/') { // Ensure not just the base path
+                         // Path is fine or constructed
+                    } elseif (!preg_match('~^https?://~i', $final_thumbnail_url)) { // Not a URL and not a valid constructed path
+                         $final_thumbnail_url = 'images/default-course.jpg'; // Reset to default if construction is suspect
+                    }
+
+                    // Final check for empty or base path only
+                    if (empty($final_thumbnail_url) || $final_thumbnail_url === 'uploads/course_thumbs/') {
+                        $final_thumbnail_url = 'images/default-course.jpg';
                     }
                     ?>
-                    <img src="<?= htmlspecialchars($thumbnail_url) ?>" 
+                    <img src="<?= htmlspecialchars($final_thumbnail_url) ?>" 
                          class="card-img-top" 
                          alt="<?= htmlspecialchars($course['title']) ?>"
                          style="height: 200px; object-fit: cover; background-color: #f0f0f0;"
-                         onerror="this.onerror=null; this.src='images/default-course.jpg';"> <!-- Fallback image -->
-                                             
+                         onerror="this.onerror=null; this.src='images/default-course.jpg';"> // JS fallback for broken images
+                    
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
                         <p class="text-muted small mb-2">

@@ -169,6 +169,10 @@ require __DIR__ . '/includes/header.php';
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        .disabled-link {
+            pointer-events: none;
+            opacity: 0.6;
+        }
         .sidebar {
             transition: all 0.3s;
             overflow-y: auto;
@@ -322,20 +326,76 @@ require __DIR__ . '/includes/header.php';
                             $has_video = !empty($current_lesson['video_url']);
                             $has_audio = !empty($current_lesson['audio_url']);
                             $has_text_content = !empty(trim($current_lesson['content']));
+
+                            $final_video_url = '';
+                            if ($has_video) {
+                                $raw_video_url = $current_lesson['video_url'];
+                                if (preg_match('~^https?://~i', $raw_video_url)) {
+                                    $final_video_url = $raw_video_url;
+                                } elseif (strpos($raw_video_url, 'uploads/') === 0 || strpos($raw_video_url, '/') === 0) {
+                                    $final_video_url = $raw_video_url;
+                                } elseif (strpos($raw_video_url, '/') === false && !empty($raw_video_url)) { 
+                                    $final_video_url = 'uploads/course_materials/' . $raw_video_url; 
+                                } else { 
+                                    $final_video_url = $raw_video_url; 
+                                }
+                                $final_video_url = str_replace('//', '/', $final_video_url);
+                                if (empty($final_video_url) || $final_video_url === 'uploads/course_materials/'){
+                                    $final_video_url = ''; // Invalidate if it's just the base path or empty
+                                }
+                            }
+
+                            $final_audio_url = '';
+                            if ($has_audio) {
+                                $raw_audio_url = $current_lesson['audio_url'];
+                                if (preg_match('~^https?://~i', $raw_audio_url)) {
+                                    $final_audio_url = $raw_audio_url;
+                                } elseif (strpos($raw_audio_url, 'uploads/') === 0 || strpos($raw_audio_url, '/') === 0) {
+                                    $final_audio_url = $raw_audio_url;
+                                } elseif (strpos($raw_audio_url, '/') === false && !empty($raw_audio_url)) { 
+                                    $final_audio_url = 'uploads/course_materials/' . $raw_audio_url; 
+                                } else {
+                                    $final_audio_url = $raw_audio_url;
+                                }
+                                $final_audio_url = str_replace('//', '/', $final_audio_url);
+                                if (empty($final_audio_url) || $final_audio_url === 'uploads/course_materials/'){
+                                     $final_audio_url = ''; // Invalidate
+                                }
+                            }
+
+                            $final_poster_url = 'images/default-course.jpg'; // Default poster
+                            if (!empty($current_lesson['thumbnail_url'])) {
+                                $raw_poster_url = $current_lesson['thumbnail_url'];
+                                if (preg_match('~^https?://~i', $raw_poster_url)) {
+                                    $final_poster_url = $raw_poster_url;
+                                } elseif (strpos($raw_poster_url, 'uploads/course_thumbs/') === 0) {
+                                    $final_poster_url = $raw_poster_url;
+                                } elseif (strpos($raw_poster_url, '/') === false && !empty($raw_poster_url)) {
+                                    $final_poster_url = 'uploads/course_thumbs/' . $raw_poster_url;
+                                } else {
+                                     if (strpos($raw_poster_url, '/') === 0) { $final_poster_url = $raw_poster_url; }
+                                     else { $final_poster_url = 'uploads/course_thumbs/' . $raw_poster_url;}
+                                }
+                                $final_poster_url = str_replace('//', '/', $final_poster_url);
+                                 if (empty($final_poster_url) || $final_poster_url === 'uploads/course_thumbs/' || $final_poster_url === '/') {
+                                    $final_poster_url = 'images/default-course.jpg';
+                                }
+                            }
                             ?>
 
-                            <?php if ($has_video): ?>
+                            <?php if ($has_video && !empty($final_video_url)): ?>
                                 <div class="ratio ratio-16x9 mb-4 rounded overflow-hidden border border-success">
                                     <video controls class="w-100 bg-black" 
-                                           poster="<?= htmlspecialchars($current_lesson['thumbnail_url'] ?? '') ?>">
-                                        <source src="<?= htmlspecialchars($current_lesson['video_url']) ?>" type="video/mp4">
+                                           poster="<?= htmlspecialchars($final_poster_url) ?>"
+                                           onerror="this.poster='images/default-course.jpg';">
+                                        <source src="<?= htmlspecialchars($final_video_url) ?>" type="video/mp4">
                                         <p class="text-light bg-dark p-2">Your browser doesn't support HTML5 video. If video does not load, the source might be unavailable or in an unsupported format.</p>
                                     </video>
                                 </div>
-                            <?php elseif ($has_audio): ?>
+                            <?php elseif ($has_audio && !empty($final_audio_url)): ?>
                                 <div class="mb-4 p-3 bg-black rounded border border-success">
                                     <audio controls class="w-100">
-                                        <source src="<?= htmlspecialchars($current_lesson['audio_url']) ?>" type="audio/mpeg">
+                                        <source src="<?= htmlspecialchars($final_audio_url) ?>" type="audio/mpeg">
                                         <p class="text-light bg-dark p-2">Your browser doesn't support HTML5 audio. If audio does not load, the source might be unavailable or in an unsupported format.</p>
                                     </audio>
                                 </div>
@@ -369,18 +429,61 @@ require __DIR__ . '/includes/header.php';
                                     </h5>
                                     <div class="list-group">
                                         <?php foreach ($attachments as $file): ?>
-                                            <a href="<?= htmlspecialchars($file['file_url']) ?>" 
-                                               class="list-group-item list-group-item-action bg-dark border-success text-light d-flex justify-content-between align-items-center"
-                                               target="_blank">
+                                            <?php
+                                            // Inside the foreach loop for $attachments:
+                                            $raw_file_url = $file['file_url'] ?? null;
+                                            $final_file_url = '#'; // Default to a non-functional link if URL is invalid/missing
+                                            $file_display_name = htmlspecialchars($file['filename'] ?? 'Unnamed File');
+                                            $file_size_formatted = isset($file['file_size']) ? formatFileSize($file['file_size']) : 'N/A';
+                                            $file_target = '_blank'; // Open in new tab by default
+
+                                            if (!empty($raw_file_url)) {
+                                                if (preg_match('~^https?://~i', $raw_file_url)) {
+                                                    // It's a full URL
+                                                    $final_file_url = $raw_file_url;
+                                                } elseif (strpos($raw_file_url, 'uploads/course_materials/') === 0) {
+                                                    // Already includes the full base path for materials
+                                                    $final_file_url = $raw_file_url;
+                                                } elseif (strpos($raw_file_url, '/') === false) {
+                                                    // Assumed to be a filename, prepend the base path for materials
+                                                    $final_file_url = 'uploads/course_materials/' . $raw_file_url;
+                                                } else {
+                                                    // It has slashes but isn't a full URL and doesn't start with known path.
+                                                    // Assume it might be a root-relative path (e.g., /uploads/course_materials/file.pdf)
+                                                    if (strpos($raw_file_url, '/') === 0) {
+                                                         $final_file_url = $raw_file_url;
+                                                    } else {
+                                                         // A relative path like 'folder/file.pdf' - less likely for shared course materials.
+                                                         $final_file_url = 'uploads/course_materials/' . $raw_file_url;
+                                                    }
+                                                }
+                                                // Clean up potential double slashes
+                                                $final_file_url = str_replace('//', '/', $final_file_url);
+
+                                                if (empty($final_file_url) || $final_file_url === 'uploads/course_materials/' || $final_file_url === '/') {
+                                                    $final_file_url = '#';
+                                                    $file_target = ''; 
+                                                }
+                                            } else {
+                                                $file_target = '';
+                                            }
+
+                                            $icon_class = 'fa-file-download text-success'; // Default icon
+                                            if (isset($file['mime_type'])) {
+                                                if (strpos($file['mime_type'], 'pdf') !== false) $icon_class = 'fa-file-pdf text-danger';
+                                                elseif (strpos($file['mime_type'], 'zip') !== false || strpos($file['mime_type'], 'archive') !== false) $icon_class = 'fa-file-archive text-warning';
+                                                elseif (strpos($file['mime_type'], 'word') !== false) $icon_class = 'fa-file-word text-primary';
+                                                elseif (strpos($file['mime_type'], 'presentation') !== false || strpos($file['mime_type'], 'powerpoint') !== false) $icon_class = 'fa-file-powerpoint text-warning';
+                                            }
+                                            ?>
+                                            <a href="<?= htmlspecialchars($final_file_url) ?>" 
+                                               class="list-group-item list-group-item-action bg-dark border-success text-light d-flex justify-content-between align-items-center <?= ($final_file_url === '#') ? 'disabled-link' : '' ?>"
+                                               <?= ($final_file_url !== '#' && $file_target === '_blank') ? 'target="_blank" rel="noopener noreferrer"' : '' ?>>
                                                 <span class="d-flex align-items-center">
-                                                    <i class="fas 
-                                                        <?= strpos($file['mime_type'], 'pdf') !== false ? 'fa-file-pdf text-danger' : 
-                                                           (strpos($file['mime_type'], 'zip') !== false ? 'fa-file-archive text-warning' : 
-                                                           'fa-file-download text-success') ?> 
-                                                        me-3"></i>
-                                                    <?= htmlspecialchars($file['filename']) ?>
+                                                    <i class="fas <?= $icon_class ?> me-3"></i>
+                                                    <?= $file_display_name ?>
                                                 </span>
-                                                <small class="text-muted">(<?= formatFileSize($file['file_size']) ?>)</small>
+                                                <small class="text-muted">(<?= $file_size_formatted ?>)</small>
                                             </a>
                                         <?php endforeach; ?>
                                     </div>
