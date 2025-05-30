@@ -239,8 +239,11 @@ $activities = $conn->query("
                             <i class="fas fa-database"></i> Backup Now
                         </button>
                         <button class="btn btn-dark">
-                            <i class="fas fa-cog"></i> System Settings
+                            <a href="systemsettings.php">
+                                <i class="fas fa-cog"></i> System Settings
+                            </a>
                         </button>
+                         
                     </div>
                 </div>
             </div>

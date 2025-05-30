@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF token validation (assuming contact.php will have a CSRF token field)
     // Let's assume contact.php form will be updated to include:
-    // <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+    // <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' 
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
         $_SESSION['error_message'] = "Invalid CSRF token. Please try again.";
         header("Location: contact.php#contactForm"); // Keep user at the form

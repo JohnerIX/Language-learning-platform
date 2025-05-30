@@ -104,8 +104,8 @@ try {
                          class="card-img-top" 
                          alt="<?= htmlspecialchars($course['title']) ?>"
                          style="height: 200px; object-fit: cover; background-color: #f0f0f0;"
-                         onerror="this.onerror=null; this.src='images/default-course.jpg';"> // JS fallback for broken images
-                    
+                         onerror="this.onerror=null; this.src='images/default-course.jpg';"> <!-- Fallback image -->
+                                             
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
                         <p class="text-muted small mb-2">
@@ -132,7 +132,7 @@ try {
                     
                     <div class="card-footer bg-transparent border-top-0 text-center">
                          <small class="text-muted">
-                            Price: <?= htmlspecialchars($course['price'] > 0 ? '$' . number_format($course['price'], 2) : 'Free') ?>
+                            Price: <?= htmlspecialchars($course['price'] > 0 ? 'UGX ' . number_format($course['price'], 2) : 'Free') ?>
                         </small>
                     </div>
                 </div>
