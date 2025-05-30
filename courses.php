@@ -64,7 +64,7 @@ try {
 
     <div class="row mb-4">
         <div class="col-md-8 offset-md-2">
-            <form action="courses.php" method="GET" class="d-flex">
+            <form action="courses.php" method="GET" class="d-flex" style="height: 40px;">
                 <input type="text" name="search_term" class="form-control me-2" 
                        placeholder="Search for courses (e.g., title, keyword)" 
                        value="<?= htmlspecialchars($_GET['search_term'] ?? '') ?>">
@@ -104,7 +104,7 @@ try {
                          class="card-img-top" 
                          alt="<?= htmlspecialchars($course['title']) ?>"
                          style="height: 200px; object-fit: cover; background-color: #f0f0f0;"
-                         onerror="this.onerror=null; this.src='images/default-course.jpg';"> // JS fallback for broken images
+                         onerror="this.onerror=null; this.src='images/default-course.jpg';"> <!-- Fallback for broken images -->
                     
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
@@ -132,7 +132,7 @@ try {
                     
                     <div class="card-footer bg-transparent border-top-0 text-center">
                          <small class="text-muted">
-                            Price: <?= htmlspecialchars($course['price'] > 0 ? '$' . number_format($course['price'], 2) : 'Free') ?>
+                            Price: <?= htmlspecialchars($course['price'] > 0 ? 'UGX ' . number_format($course['price'], 2) : 'Free') ?>
                         </small>
                     </div>
                 </div>

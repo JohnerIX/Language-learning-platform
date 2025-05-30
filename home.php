@@ -19,11 +19,11 @@ try {
         $featured_courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $fetch_error = "Database connection is not available.";
-        error_log("Error in home.php: Database connection (\$conn) not available after including config.php.");
+        error_log("Error in index.php: Database connection (\$conn) not available after including config.php.");
     }
 } catch (PDOException $e) {
     $fetch_error = "Error fetching courses."; // User-friendly message
-    error_log("Error fetching courses in home.php: " . $e->getMessage());
+    error_log("Error fetching courses in index.php: " . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -33,12 +33,14 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Language Learning Platform for East African Languages">
     <title>Learn Lugha - Language Learning Platform</title>
+
+     <!-- Bootstrap CSS (if needed) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="casc.css">
     <link rel="stylesheet" href="cascade.css">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Google Translate Script -->
     <script type="text/javascript">
     function googleTranslateElementInit() {
@@ -540,7 +542,5 @@ try {
 
     <script src="function1.js"></script>
     <script src="contact.js"></script>
-    <!-- Bootstrap JS (if using Bootstrap components that require JS) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
