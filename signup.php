@@ -17,7 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['signup'])) {
         // Validate CSRF token
         if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-            die("CSRF token validation failed.");
+            $_SESSION['error_message'] = "CSRF token validation failed.";
+            redirect('signup.php'); // Redirect to show error
         }
 
         // Sanitize inputs
@@ -27,22 +28,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = $_POST['password'];
         $role = isset($_POST['role']) ? sanitize_input($_POST['role']) : 'learner'; // Get selected role
         
+        $temp_errors = []; // Temporary array for validation errors
+        if (empty($name)) $temp_errors[] = "Full name is required";
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $temp_errors[] = "Valid email is required";
+        if (!preg_match('/^\+256\d{9}$/', $phone)) $temp_errors[] = "Valid Ugandan phone number (+256...) required";
+        if (strlen($password) < 8) $temp_errors[] = "Password must be at least 8 characters";
 
-        // Validate inputs
-        $errors = [];
-        if (empty($name)) $errors[] = "Full name is required";
-        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Valid email is required";
-        if (!preg_match('/^\+256\d{9}$/', $phone)) $errors[] = "Valid Ugandan phone number (+256...) required";
-        if (strlen($password) < 8) $errors[] = "Password must be at least 8 characters";
-
-        if (empty($errors)) {
+        if (empty($temp_errors)) {
             try {
                 // Check if email/phone exists
                 $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ? OR phone = ?");
                 $stmt->execute([$email, $phone]);
                 
                 if ($stmt->fetch()) {
-                    $errors[] = "Email or phone already registered";
+                    $_SESSION['error_message'] = "Email or phone already registered";
                 } else {
                     // Hash password
                     $password_hash = password_hash($password, PASSWORD_BCRYPT);
@@ -54,23 +53,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                     
                     if ($stmt->execute([$name, $email, $phone, $password_hash, $role])) {
-                        $_SESSION['user_id'] = $conn->lastInsertId();
-                        $_SESSION['user_email'] = $email;
-                        $_SESSION['user_role'] = $role;
-                        redirect('profile.php');
+                        // Optionally auto-login the user or redirect to login with success
+                        $_SESSION['success_message'] = "Registration successful! Please log in.";
+                        redirect('login.php'); // Redirect to login page
                     } else {
-                        $errors[] = "Registration failed. Please try again.";
+                        $_SESSION['error_message'] = "Registration failed. Please try again.";
                     }
                 }
             } catch (PDOException $e) {
-                $errors[] = "Database error: " . $e->getMessage();
+                $_SESSION['error_message'] = "Database error: " . $e->getMessage();
+                error_log("Signup PDOException: " . $e->getMessage());
             }
+        } else {
+            $_SESSION['error_message'] = implode("<br>", array_map('htmlspecialchars', $temp_errors));
+        }
+        // Redirect back to signup page to show any messages
+        if (isset($_SESSION['error_message'])) {
+            redirect('signup.php');
         }
     }
 }
 require __DIR__ . '/includes/header.php';
 ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    <?php if (isset($_SESSION['error_message'])): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            html: '<?= addslashes($_SESSION['error_message']) ?>', // Use html for <br> tags
+            background: '#f8d7da',
+            color: '#721c24',
+            confirmButtonColor: '#d33'
+        });
+        <?php unset($_SESSION['error_message']); ?>
+    <?php endif; ?>
 
+    <?php if (isset($_SESSION['success_message'])): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            html: '<?= addslashes($_SESSION['success_message']) ?>', // Use html for potential <br>
+            background: '#d4edda',
+            color: '#155724',
+            confirmButtonColor: '#28a745'
+        });
+        <?php unset($_SESSION['success_message']); ?>
+    <?php endif; ?>
+});
+</script>
 <div class="container">
     <div class="row justify-content-center py-5">
         <div class="col-md-10 col-lg-8">
@@ -88,14 +119,6 @@ require __DIR__ . '/includes/header.php';
                     <div class="col-md-7 p-4 p-lg-5">
                         <h2 class="h4 mb-4">Create Account</h2>
                         
-                        <?php if (!empty($errors)): ?>
-                            <div class="alert alert-danger">
-                                <?php foreach ($errors as $error): ?>
-                                    <p class="mb-1"><?= htmlspecialchars($error) ?></p>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-
                         <!-- Social Login Buttons -->
                         <form method="post" class="mb-4">
                             <div class="d-flex justify-content-center gap-3">
@@ -121,20 +144,20 @@ require __DIR__ . '/includes/header.php';
                         </div>
 
                         <form method="POST" class="needs-validation" novalidate>
-                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                             
                             <!-- Role Selection -->
                             <div class="btn-group w-100 mb-3" role="group">
-    <input type="radio" class="btn-check" name="role" id="learner" value="learner" autocomplete="off" checked>
-    <label class="btn btn-outline-dark" for="learner">
-        <i class="fas fa-user-graduate me-2"></i>Learner
-    </label>
-    
-    <input type="radio" class="btn-check" name="role" id="tutor" value="tutor" autocomplete="off">
-    <label class="btn btn-outline-dark" for="tutor">
-        <i class="fas fa-chalkboard-teacher me-2"></i>Tutor
-    </label>
-</div>
+                                <input type="radio" class="btn-check" name="role" id="learner" value="learner" autocomplete="off" checked>
+                                <label class="btn btn-outline-dark" for="learner">
+                                    <i class="fas fa-user-graduate me-2"></i>Learner
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="role" id="tutor" value="tutor" autocomplete="off">
+                                <label class="btn btn-outline-dark" for="tutor">
+                                    <i class="fas fa-chalkboard-teacher me-2"></i>Tutor
+                                </label>
+                            </div>
 
                             <div class="mb-3">
                                 <label for="name" class="form-label">Full Name</label>

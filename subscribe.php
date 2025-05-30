@@ -4,13 +4,13 @@ require_once __DIR__ . '/includes/auth.php';
 
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
-    $_SESSION['error'] = "Please login to subscribe to courses";
+    $_SESSION['error_message'] = "Please login to subscribe to courses";
     header("Location: login.php");
     exit();
 }
 
 if (!isset($_GET['course_id']) || !is_numeric($_GET['course_id'])) {
-    $_SESSION['error'] = "Invalid course specified";
+    $_SESSION['error_message'] = "Invalid course specified";
     header("Location: courses.php");
     exit();
 }
@@ -29,7 +29,7 @@ try {
     $course = $stmt->fetch();
 
     if (!$course) {
-        $_SESSION['error'] = "Course not available for subscription";
+        $_SESSION['error_message'] = "Course not available for subscription";
         header("Location: courses.php");
         exit();
     }
@@ -43,7 +43,7 @@ try {
     $stmt->execute([$_SESSION['user_id'], $course_id]);
     
     if ($stmt->fetch()) {
-        $_SESSION['info'] = "You're already subscribed to this course";
+        $_SESSION['info_message'] = "You're already subscribed to this course";
         header("Location: learn.php?course_id=$course_id");
         exit();
     }
@@ -75,7 +75,7 @@ try {
     
     $conn->commit();
     
-    $_SESSION['success'] = "Successfully enrolled in '{$course['title']}'";
+    $_SESSION['success_message'] = "Successfully enrolled in '{$course['title']}'";
     header("Location: learn.php?course_id=$course_id");
     exit();
 
@@ -84,7 +84,7 @@ try {
         $conn->rollBack();
     }
     error_log("Subscription error: " . $e->getMessage());
-    $_SESSION['error'] = "Error processing subscription";
+    $_SESSION['error_message'] = "Error processing subscription";
     header("Location: course-details.php?id=$course_id");
     exit();
 }

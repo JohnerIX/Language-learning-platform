@@ -185,7 +185,7 @@ require __DIR__ . '/includes/header.php';
         }
     </style>
 </head>
-<body class="bg-dark text-light">
+<body>
     <div class="container-fluid min-vh-100">
         <div class="row">
             <!-- Sidebar - Course Navigation -->
@@ -318,29 +318,38 @@ require __DIR__ . '/includes/header.php';
                     <!-- Lesson Content Area -->
                     <div class="card bg-dark border-success mb-4">
                         <div class="card-body p-4">
-                            <!-- Video/Audio Player -->
-                            <?php if ($current_lesson['video_url']): ?>
+                            <?php
+                            $has_video = !empty($current_lesson['video_url']);
+                            $has_audio = !empty($current_lesson['audio_url']);
+                            $has_text_content = !empty(trim($current_lesson['content']));
+                            ?>
+
+                            <?php if ($has_video): ?>
                                 <div class="ratio ratio-16x9 mb-4 rounded overflow-hidden border border-success">
                                     <video controls class="w-100 bg-black" 
                                            poster="<?= htmlspecialchars($current_lesson['thumbnail_url'] ?? '') ?>">
-                                        <source src="<?= htmlspecialchars($current_lesson['video_url']) ?>" 
-                                                type="video/mp4">
-                                        Your browser doesn't support HTML5 video.
+                                        <source src="<?= htmlspecialchars($current_lesson['video_url']) ?>" type="video/mp4">
+                                        <p class="text-light bg-dark p-2">Your browser doesn't support HTML5 video. If video does not load, the source might be unavailable or in an unsupported format.</p>
                                     </video>
                                 </div>
-                            <?php elseif ($current_lesson['audio_url']): ?>
+                            <?php elseif ($has_audio): ?>
                                 <div class="mb-4 p-3 bg-black rounded border border-success">
                                     <audio controls class="w-100">
-                                        <source src="<?= htmlspecialchars($current_lesson['audio_url']) ?>" 
-                                                type="audio/mpeg">
-                                        Your browser doesn't support HTML5 audio.
+                                        <source src="<?= htmlspecialchars($current_lesson['audio_url']) ?>" type="audio/mpeg">
+                                        <p class="text-light bg-dark p-2">Your browser doesn't support HTML5 audio. If audio does not load, the source might be unavailable or in an unsupported format.</p>
                                     </audio>
                                 </div>
                             <?php endif; ?>
 
-                            <!-- Lesson Content -->
-                            <div class="lesson-content mb-4 p-3 bg-black rounded border border-success">
-                                <?= $current_lesson['content'] ?>
+                            // Lesson Content
+                            <div class="lesson-content mb-4 p-3 bg-black rounded border border-success text-light">
+                                <?php if ($has_text_content): ?>
+                                    <?= $current_lesson['content'] // Assuming this is HTML or safe to output directly ?>
+                                <?php elseif (!$has_video && !$has_audio): ?>
+                                    <p class="text-muted">No content (video, audio, or text) available for this lesson.</p>
+                                <?php elseif ($has_video || $has_audio): ?>
+                                    <p class="text-muted">No additional textual content for this lesson. Please refer to the media above.</p>
+                                <?php endif; ?>
                             </div>
 
                             <!-- Attachments -->

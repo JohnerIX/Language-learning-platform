@@ -2,7 +2,7 @@
 require_once __DIR__ . '/includes/config.php';
 
 $pageTitle = "Login";
-$error = '';
+// $error = ''; // Removed, will use $_SESSION['error_message']
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
@@ -29,21 +29,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
                     redirect('tutor-dashboard.php');
                     break;
                 case 'learner':
+                    $_SESSION['success_message'] = "Login successful! Welcome back, " . htmlspecialchars($user['name']);
                     redirect('dashboard.php');
                     break;
                 default:
+                    $_SESSION['success_message'] = "Login successful! Welcome back, " . htmlspecialchars($user['name']);
                     redirect('profile.php');
             }
         } else {
-            $error = "Invalid email or password";
+            $_SESSION['error_message'] = "Invalid email or password";
         }
     } catch (PDOException $e) {
-        $error = "Database error: " . $e->getMessage();
+        $_SESSION['error_message'] = "Database error: " . $e->getMessage();
+        // Log detailed error for admin, show generic message to user
+        error_log("Login PDOException: " . $e->getMessage());
+    }
+    // Redirect back to login page to show the message
+    if (isset($_SESSION['error_message'])) {
+        redirect('login.php');
     }
 }
 
 require __DIR__ . '/includes/header.php';
 ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    <?php if (isset($_SESSION['error_message'])): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: '<?= addslashes($_SESSION['error_message']) ?>',
+            background: '#f8d7da', // Light red background for error
+            color: '#721c24',      // Dark red text
+            confirmButtonColor: '#d33' // Red confirm button
+        });
+        <?php unset($_SESSION['error_message']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['success_message'])): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: '<?= addslashes($_SESSION['success_message']) ?>',
+            background: '#d4edda', // Light green background for success
+            color: '#155724',      // Dark green text
+            confirmButtonColor: '#28a745' // Green confirm button
+        });
+        <?php unset($_SESSION['success_message']); ?>
+    <?php endif; ?>
+});
+</script>
 <div class="container-fluid bg-light min-vh-100 d-flex align-items-center">
     <div class="container">
         <div class="row justify-content-center">
@@ -78,14 +113,6 @@ require __DIR__ . '/includes/header.php';
                             <div class="w-100 h-100 d-flex flex-column justify-content-center">
                                 <h2 class="h3 mb-4 text-dark fw-bold">Welcome Back</h2>
                                 
-                                <?php if (!empty($errors)): ?>
-                                    <div class="alert alert-danger rounded-0 mb-4">
-                                        <?php foreach ($errors as $error): ?>
-                                            <p class="mb-1 small"><?= htmlspecialchars($error) ?></p>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-
                                 <!-- Social Login Buttons -->
                                 <div class="mb-4">
                                     <a href="google_auth.php" class="btn btn-outline-dark rounded-pill w-100 mb-3">
@@ -106,7 +133,7 @@ require __DIR__ . '/includes/header.php';
 
                                 <!-- Email Login Form -->
                                 <form method="POST" class="needs-validation" novalidate>
-                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     
                                     <div class="mb-3">
                                         <label for="email" class="form-label small text-uppercase fw-bold text-muted">Email Address</label>

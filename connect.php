@@ -17,12 +17,12 @@
         
         <div class="nav-links">
             <div class="image-container">
-                <a href="home.html"><img src="images/home.jpg" alt="Home" width="35" height="35"></a>
+                <a href="home.php"><img src="images/home.jpg" alt="Home" width="35" height="35"></a>
                 <div class="overlay">Home</div>
             </div>
             
             <div class="image-container">
-                <a href="about.html"><img src="images/about.jpg" alt="About Us" width="35" height="35"></a>
+                <a href="about.php"><img src="images/about.jpg" alt="About Us" width="35" height="35"></a>
                 <div class="overlay">About</div>
             </div>
                 
@@ -30,18 +30,18 @@
                 <a href="#login/signup"><img src="images/profilepic.jpg" alt="Profile" width="35" height="35"></a>
                 <div class="overlay">Sign In</div>
                 <div class="dropdown-content">
-                    <a href="login.html">Login/SignUp</a> 
-                    <a href="profile.html">My profile</a>
+                    <a href="login.php">Login/SignUp</a> 
+                    <a href="profile.php">My profile</a>
                 </div>
             </div>
                 
             <div class="image-container">
-                <a href="contact.html"><img src="images/contact.jpg" alt="Contact" width="35" height="35"></a>
+                <a href="contact.php"><img src="images/contact.jpg" alt="Contact" width="35" height="35"></a>
                 <div class="overlay">Contact</div>
             </div>    
                 
             <div class="image-container">
-                <a href="connect.html"><img src="images/connz.png" alt="Connect" width="35" height="35"></a>
+                <a href="connect.php"><img src="images/connz.png" alt="Connect" width="35" height="35"></a>
                 <div class="overlay">Connect</div>
             </div>
                 
@@ -49,10 +49,10 @@
                 <a href="#menu"><img src="images/menu.jpg" alt="Menu" width="35" height="35" class="image-container"></a>
                 <div class="overlay">Menu</div>
                 <div class="dropdown-content">
-                    <a href="contact.html">Help</a> 
-                    <a href="lessons.html">Luganda lessons</a>
-                    <a href="lessons1.html">Runya-kitala lessons</a>
-                    <a href="lessons2.html">Luo lessons</a>
+                    <a href="contact.php">Help</a> 
+                    <a href="lessons.php">Luganda lessons</a>
+                    <a href="lessons1.php">Runya-kitala lessons</a>
+                    <a href="lessons2.php">Luo lessons</a>
                     <a href="home3.html#foot">Follow Us</a>
                     <a href="https://wa.me/+256773855888">Direct chat</a>
                 </div>
@@ -484,12 +484,12 @@
             </thead>
             <tbody>
               <tr>
-                <td><a href="home.html">Home </a> <br>
-                    <a href="contact.html">Contact Us </a> <br>
-                    <a href="about.html">About Us </a> <br>
-                    <a href="connect.html">Connect </a> <br> 
-                    <a href="menu.html">Main menu </a> <br>
-                    <a href="login.html">Subscribe now </a></td>
+                <td><a href="home.php">Home </a> <br>
+                    <a href="contact.php">Contact Us </a> <br>
+                    <a href="about.php">About Us </a> <br>
+                    <a href="connect.php">Connect </a> <br> 
+                    <a href="menu.php">Main menu </a> <br>
+                    <a href="login.php">Subscribe now </a></td>
                 <td><div class="social-links">
                     <a href="https://www.youtube.com/@johnerkasozi" aria-label="YouTube">
                         <img src="images/Youtube.jpg" alt="Youtube">

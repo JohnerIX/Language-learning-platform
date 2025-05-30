@@ -4,7 +4,29 @@ require_once __DIR__ . '/includes/admin-auth.php';
 
 $pageTitle = "Manage Courses";
 require __DIR__ . '/includes/header.php';
+?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    <?php if (isset($_SESSION['error_message'])): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: '<?= addslashes($_SESSION['error_message']) ?>',
+        });
+        <?php unset($_SESSION['error_message']); ?>
+    <?php endif; ?>
 
+    <?php if (isset($_SESSION['success_message'])): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: '<?= addslashes($_SESSION['success_message']) ?>',
+        });
+        <?php unset($_SESSION['success_message']); ?>
+    <?php endif; ?>
+});
+</script>
+<?php
 // Handle course actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
@@ -25,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     WHERE course_id = ?
                 ");
                 $stmt->execute([$_SESSION['user_id'], $course_id]);
-                $_SESSION['success'] = "Course approved successfully";
+                $_SESSION['success_message'] = "Course approved successfully";
                 break;
                 
             case 'reject':
@@ -42,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $_SESSION['user_id'],
                     $course_id
                 ]);
-                $_SESSION['success'] = "Course rejected successfully";
+                $_SESSION['success_message'] = "Course rejected successfully";
                 break;
                 
             case 'feature':
@@ -52,16 +74,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     WHERE course_id = ?
                 ");
                 $stmt->execute([(int)$_POST['is_featured'], $course_id]);
-                $_SESSION['success'] = "Course featured status updated";
+                $_SESSION['success_message'] = "Course featured status updated";
                 break;
         }
         
-        header("Location: admin-courses.php");
+        header("Location: admin-courses.php" . (isset($_GET['filter']) ? "?filter=" . htmlspecialchars($_GET['filter']) : ""));
         exit();
         
     } catch (PDOException $e) {
         error_log("Admin course action failed: " . $e->getMessage());
-        $_SESSION['error'] = "Action failed. Please try again.";
+        $_SESSION['error_message'] = "Action failed. Please try again.";
+        header("Location: admin-courses.php" . (isset($_GET['filter']) ? "?filter=" . htmlspecialchars($_GET['filter']) : ""));
+        exit();
     }
 }
 
@@ -99,20 +123,9 @@ $stmt->execute($params);
 $courses = $stmt->fetchAll();
 ?>
 
-<div class="container-fluid">
-    <?php if (isset($_SESSION['success'])): ?>
-        <div class="alert alert-success">
-            <?= $_SESSION['success'] ?>
-            <?php unset($_SESSION['success']); ?>
-        </div>
-    <?php endif; ?>
-    
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-danger">
-            <?= $_SESSION['error'] ?>
-            <?php unset($_SESSION['error']); ?>
-        </div>
-    <?php endif; ?>
+<div class="container-fluid pt-4">
+    <?php /* Old Bootstrap alert display removed
+    */ ?>
 
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">

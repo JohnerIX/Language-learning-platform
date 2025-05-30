@@ -5,14 +5,14 @@ require_once __DIR__ . '/includes/auth.php';
 // Verify user is logged in
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
-    $_SESSION['error'] = "Please login to complete payment";
+    $_SESSION['error_message'] = "Please login to complete payment";
     header("Location: login.php");
     exit();
 }
 
 // Verify course selection exists
 if (!isset($_SESSION['payment_course_id'])) {
-    $_SESSION['error'] = "No course selected for payment";
+    $_SESSION['error_message'] = "No course selected for payment";
     header("Location: courses.php");
     exit();
 }
@@ -31,7 +31,7 @@ try {
     $course = $stmt->fetch();
 
     if (!$course) {
-        $_SESSION['error'] = "Course not available for payment";
+        $_SESSION['error_message'] = "Course not available for payment";
         header("Location: courses.php");
         exit();
     }
@@ -45,7 +45,7 @@ try {
     $stmt->execute([$_SESSION['user_id'], $course_id]);
     
     if ($stmt->fetch()) {
-        $_SESSION['info'] = "You're already enrolled in this course";
+        $_SESSION['info_message'] = "You're already enrolled in this course";
         header("Location: learn.php?course_id=$course_id");
         exit();
     }
@@ -59,7 +59,7 @@ try {
         // Validate payment method
         $valid_methods = ['mobile_money', 'credit_card', 'bank_transfer'];
         if (!in_array($_POST['payment_method'], $valid_methods)) {
-            $_SESSION['error'] = "Invalid payment method selected";
+            $_SESSION['error_message'] = "Invalid payment method selected";
             header("Location: payment.php");
             exit();
         }
@@ -123,7 +123,7 @@ try {
                 // Clear payment session
                 unset($_SESSION['payment_course_id']);
                 
-                $_SESSION['success'] = "Payment successful! You now have access to '{$course['title']}'";
+                $_SESSION['success_message'] = "Payment successful! You now have access to '{$course['title']}'";
                 header("Location: learn.php?course_id=$course_id");
                 exit();
             } else {
@@ -133,14 +133,17 @@ try {
         } catch (Exception $e) {
             $conn->rollBack();
             error_log("Payment Error: " . $e->getMessage());
-            $_SESSION['error'] = "Error processing payment: " . $e->getMessage();
+            $_SESSION['error_message'] = "Error processing payment: " . $e->getMessage();
+            // Ensure redirect to display the message
+            header("Location: payment.php"); // Or appropriate page
+            exit();
         }
     }
 
 } catch (PDOException $e) {
     error_log("Database Error: " . $e->getMessage());
-    $_SESSION['error'] = "Database error processing payment";
-    header("Location: course-details.php?id=$course_id");
+    $_SESSION['error_message'] = "Database error processing payment";
+    header("Location: course-details.php?id=$course_id"); // Redirect to course details or courses page
     exit();
 }
 
@@ -157,12 +160,14 @@ require __DIR__ . '/includes/header.php';
                 </div>
                 
                 <div class="card-body">
-                    <?php if (isset($_SESSION['error'])): ?>
+                    <?php /* Old error display removed, handled by SweetAlert in header.php
+                    <?php if (isset($_SESSION['error_message'])): ?>
                         <div class="alert alert-danger">
-                            <?= htmlspecialchars($_SESSION['error']) ?>
-                            <?php unset($_SESSION['error']); ?>
+                            <?= htmlspecialchars($_SESSION['error_message']) ?>
+                            <?php unset($_SESSION['error_message']); ?>
                         </div>
                     <?php endif; ?>
+                    */ ?>
                     
                     <div class="row">
                         <!-- Course Summary -->

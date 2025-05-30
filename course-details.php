@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/auth.php';
 
 // Check if course ID is provided
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    $_SESSION['error'] = "Invalid course specified";
+    $_SESSION['error_message'] = "Invalid course specified";
     header("Location: courses.php");
     exit();
 }
@@ -29,7 +29,7 @@ try {
     $course = $stmt->fetch();
 
     if (!$course) {
-        $_SESSION['error'] = "Course not found or not available";
+        $_SESSION['error_message'] = "Course not found or not available";
         header("Location: courses.php");
         exit();
     }
@@ -69,7 +69,7 @@ try {
 
 } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
-    $_SESSION['error'] = "Error loading course details";
+    $_SESSION['error_message'] = "Error loading course details";
     header("Location: courses.php");
     exit();
 }

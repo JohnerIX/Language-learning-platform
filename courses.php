@@ -9,31 +9,49 @@ require __DIR__ . '/includes/header.php';
 $subscribedCourses = [];
 $courses = [];
 $error = null;
+$searchTerm = isset($_GET['search_term']) ? trim($_GET['search_term']) : '';
 
 try {
     // Check subscriptions if logged in
     if (isset($_SESSION['user_id'])) {
-        if ($conn->query("SHOW TABLES LIKE 'subscriptions'")->rowCount() > 0) {
-            $stmt = $conn->prepare("SELECT course_id FROM subscriptions WHERE user_id = ?");
-            $stmt->execute([$_SESSION['user_id']]);
-            $subscribedCourses = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        // Check if subscriptions table exists before querying
+        $stmtCheckSubTable = $conn->query("SHOW TABLES LIKE 'subscriptions'");
+        if ($stmtCheckSubTable->rowCount() > 0) {
+            $stmtSub = $conn->prepare("SELECT course_id FROM subscriptions WHERE user_id = ?");
+            $stmtSub->execute([$_SESSION['user_id']]);
+            $subscribedCourses = $stmtSub->fetchAll(PDO::FETCH_COLUMN);
         }
     }
 
-    // Get published courses
-    $stmt = $conn->prepare("
+    // Base SQL query
+    $sql = "
         SELECT c.*, u.name AS tutor_name 
         FROM courses c
         JOIN users u ON c.tutor_id = u.user_id
-        WHERE c.status = 'published'
-        ORDER BY c.created_at DESC
-    ");
-    $stmt->execute();
+    ";
+    $params = [];
+    $conditions = ["c.status = 'published'"]; // Only show published courses
+
+    // Add search condition if search term is provided
+    if (!empty($searchTerm)) {
+        $conditions[] = "(c.title LIKE ? OR c.description LIKE ?)";
+        $params[] = "%" . $searchTerm . "%";
+        $params[] = "%" . $searchTerm . "%";
+    }
+
+    if (!empty($conditions)) {
+        $sql .= " WHERE " . implode(" AND ", $conditions);
+    }
+    
+    $sql .= " ORDER BY c.is_featured DESC, c.created_at DESC"; // Featured courses first
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
     $courses = $stmt->fetchAll();
     
 } catch (PDOException $e) {
     $error = "Database error: " . $e->getMessage();
-    error_log($error);
+    error_log($error); // Log the detailed error
 }
 ?>
 
@@ -43,10 +61,29 @@ try {
     <?php endif; ?>
     
     <h1 class="mb-4">Available Courses</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-8 offset-md-2">
+            <form action="courses.php" method="GET" class="d-flex">
+                <input type="text" name="search_term" class="form-control me-2" 
+                       placeholder="Search for courses (e.g., title, keyword)" 
+                       value="<?= htmlspecialchars($_GET['search_term'] ?? '') ?>">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </form>
+        </div>
+    </div>
     
-    <?php if (empty($courses)): ?>
-        <div class="alert alert-info">No courses available yet.</div>
-    <?php else: ?>
+    <?php if (!empty($searchTerm) && !$error): ?>
+        <h4 class="mb-3">Search results for: "<?= htmlspecialchars($searchTerm) ?>"</h4>
+    <?php endif; ?>
+
+    <?php if (empty($courses) && !$error): ?>
+        <div class="alert alert-info">
+            <?= !empty($searchTerm) ? 'No courses found matching your search term: "' . htmlspecialchars($searchTerm) . '". Try a different keyword.' : 'No courses available at the moment. Please check back later!' ?>
+        </div>
+    <?php elseif(!empty($courses)): ?>
         <div class="row">
             <?php foreach ($courses as $course): ?>
             <div class="col-md-4 mb-4">
