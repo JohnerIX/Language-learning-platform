@@ -10,7 +10,7 @@ $payments = [];
 $error = '';
 try {
     // Assuming a 'payments' table and joining with users and courses for more details
-    $sql = "SELECT p.payment_id, u.name AS user_name, c.title AS course_title, p.amount, p.status, p.payment_date
+    $sql = "SELECT p.payment_id, u.name AS user_name, c.title AS course_title, p.amount, p.status, p.payment_date 
             FROM payments p
             JOIN users u ON p.user_id = u.user_id
             JOIN courses c ON p.course_id = c.course_id

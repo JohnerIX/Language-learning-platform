@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $to = 'isaacvital44@gmail.com'; // Admin email address
         $email_subject = "New Contact Form Message: " . $subject;
-
+        
         $email_body = "You have received a new message from your website contact form.\n\n";
         $email_body .= "Here are the details:\n";
         $email_body .= "Name: " . $name . "\n";

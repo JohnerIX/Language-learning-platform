@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
             if (!empty($sql_set_parts)) {
                 $sql_set_parts[] = "updated_at = NOW()";
                 $params[] = $course_id; // For the WHERE clause
-
+                
                 $sql = "UPDATE courses SET " . implode(", ", $sql_set_parts) . " WHERE course_id = ?";
                 try {
                     $stmt = $conn->prepare($sql);
@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
     }
             // ... (existing update_details logic from previous step, assumed to be here)
             // Ensure this part also correctly refreshes $course variable if details change.
-             if (!isset($_SESSION['error_message'])) {
+             if (!isset($_SESSION['error_message'])) { 
                 $_SESSION['success_message'] = "Course details updated successfully!";
                 // Refresh course data after update
                 $stmt_refresh = $conn->prepare("SELECT * FROM courses WHERE course_id = ?");
@@ -242,8 +242,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
             $section_id_for_lesson = (int)$_POST['section_id_modal_input']; // From modal's hidden input
             $lesson_id_for_edit = ($action === 'edit_lesson') ? (int)$_POST['lesson_id_modal_input'] : null;
 
-            $lesson_content = null;
-            $lesson_video_url = null;
+            $lesson_content = null; 
+            $lesson_video_url = null; 
             $lesson_file_path = null;
 
             if (empty($lesson_title) || empty($lesson_type) || $lesson_order < 1 || empty($section_id_for_lesson)) {
@@ -264,16 +264,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
                 }
             } elseif ($lesson_type === 'pdf_file' || $lesson_type === 'audio_file') {
                 $file_input_name = ($lesson_type === 'pdf_file') ? 'lesson_pdf_file' : 'lesson_audio_file';
-
+                
                 if (isset($_FILES[$file_input_name]) && $_FILES[$file_input_name]['error'] === UPLOAD_ERR_OK) {
-                    if (!is_dir($material_upload_dir)) {
+                    if (!is_dir($material_upload_dir)) { 
                         if (!mkdir($material_upload_dir, 0755, true)) { throw new Exception("Failed to create materials upload directory."); }
                     }
                     $fileExt = strtolower(pathinfo($_FILES[$file_input_name]['name'], PATHINFO_EXTENSION));
-                    $allowed_pdf = ['pdf'];
-                    $allowed_audio = ['mp3', 'wav', 'ogg', 'm4a'];
+                    $allowed_pdf = ['pdf']; 
+                    $allowed_audio = ['mp3', 'wav', 'ogg', 'm4a']; 
                     $max_size = 10 * 1024 * 1024; // 10MB
-
+                    
                     if ($lesson_type === 'pdf_file' && !in_array($fileExt, $allowed_pdf)) { throw new Exception("Invalid PDF file type. Only .pdf allowed."); }
                     if ($lesson_type === 'audio_file' && !in_array($fileExt, $allowed_audio)) { throw new Exception("Invalid audio file type (allowed: mp3, wav, ogg, m4a)."); }
                     if ($_FILES[$file_input_name]['size'] > $max_size) { throw new Exception("File size exceeds limit (10MB)."); }
@@ -283,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
                         $stmt_old_file = $conn->prepare("SELECT file_path FROM lessons WHERE lesson_id = ?");
                         $stmt_old_file->execute([$lesson_id_for_edit]);
                         $old_file_path = $stmt_old_file->fetchColumn();
-                        if ($old_file_path && file_exists(__DIR__ . '/' . $old_file_path)) {
+                        if ($old_file_path && file_exists(__DIR__ . '/' . $old_file_path)) { 
                             unlink(__DIR__ . '/' . $old_file_path);
                         }
                     }
@@ -291,12 +291,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
                     if (move_uploaded_file($_FILES[$file_input_name]['tmp_name'], $material_upload_dir . $new_filename)) {
                         $lesson_file_path = 'uploads/course_materials/' . $new_filename;
                     } else { throw new Exception("Failed to upload lesson file."); }
-                } elseif ($action === 'add_lesson') {
+                } elseif ($action === 'add_lesson') { 
                      throw new Exception("A file is required when creating a 'PDF File' or 'Audio File' lesson type.");
                 }
                 // If editing and no new file is uploaded, keep the old path (handled below)
             }
-
+            
             if ($action === 'add_lesson') {
                 $stmt = $conn->prepare("INSERT INTO lessons (course_id, section_id, title, `order`, lesson_type, content, video_url, file_path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
                 $stmt->execute([$course_id, $section_id_for_lesson, $lesson_title, $lesson_order, $lesson_type, $lesson_content, $lesson_video_url, $lesson_file_path]);
@@ -312,7 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
 
                 // If type changed from a file type to non-file type, delete old file
                 if (($current_lesson_data_for_edit['lesson_type'] === 'pdf_file' || $current_lesson_data_for_edit['lesson_type'] === 'audio_file') &&
-                    ($lesson_type !== 'pdf_file' && $lesson_type !== 'audio_file') &&
+                    ($lesson_type !== 'pdf_file' && $lesson_type !== 'audio_file') && 
                     !empty($current_lesson_data_for_edit['file_path']) && file_exists(__DIR__ . '/' . $current_lesson_data_for_edit['file_path'])) {
                     unlink(__DIR__ . '/' . $current_lesson_data_for_edit['file_path']);
                     $current_lesson_data_for_edit['file_path'] = null; // Ensure it's cleared if type changes
@@ -322,7 +322,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
                 if (($lesson_type === 'pdf_file' || $lesson_type === 'audio_file') && $lesson_file_path === null) {
                     $lesson_file_path = $current_lesson_data_for_edit['file_path'] ?? null;
                 }
-
+                
                 // Clear fields not relevant to the new type
                 if ($lesson_type !== 'text') $lesson_content = null;
                 if ($lesson_type !== 'video_url') $lesson_video_url = null;
@@ -347,14 +347,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
                     unlink(__DIR__ . '/' . $lesson_to_delete['file_path']);
                 }
             }
-
+            
             $stmt = $conn->prepare("DELETE FROM lessons WHERE lesson_id = ? AND course_id = ?");
             $stmt->execute([$lesson_id_delete, $course_id]);
             $_SESSION['success_message'] = "Lesson deleted successfully.";
             header("Location: edit-course.php?id=" . $course_id . "&active_tab=content"); exit();
         }
 
-    } catch (PDOException $e) {
+    } catch (PDOException $e) { 
         error_log("General POST error in edit-course.php (PDO): " . $e->getMessage());
         $_SESSION['error_message'] = "A database error occurred: " . $e->getMessage();
     } catch (Exception $ex) { // Catch other general exceptions
@@ -453,7 +453,7 @@ require __DIR__ . '/includes/header.php';
                             <label for="course_category" class="form-label">Category</label>
                             <input type="text" class="form-control" id="course_category" name="course_category" value="<?= htmlspecialchars($course['category'] ?? '') ?>" placeholder="e.g., Business, Technology, Arts">
                         </div>
-
+                        
                         <hr>
                         <h5 class="mt-3">Pricing</h5>
                         <div class="row">
@@ -479,7 +479,7 @@ require __DIR__ . '/includes/header.php';
                             <small class="form-text text-muted">Current thumbnail:</small><br>
                             <?php
                             $raw_thumbnail_url_detail = $course['thumbnail_url'] ?? null;
-                            $final_thumbnail_url_detail = 'images/default-course.jpg';
+                            $final_thumbnail_url_detail = 'images/default-course.jpg'; 
                             if (!empty($raw_thumbnail_url_detail)) {
                                 if (preg_match('~^https?://~i', $raw_thumbnail_url_detail)) { $final_thumbnail_url_detail = $raw_thumbnail_url_detail; }
                                 elseif (strpos($raw_thumbnail_url_detail, 'uploads/course_thumbs/') === 0) { $final_thumbnail_url_detail = $raw_thumbnail_url_detail; }
@@ -528,7 +528,7 @@ require __DIR__ . '/includes/header.php';
                         <div class="accordion-item mb-2">
                             <h2 class="accordion-header" id="sectionHeading<?= $section['section_id'] ?>">
                                 <button class="accordion-button <?= $section_idx > 0 ? 'collapsed' : '' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#sectionCollapse<?= $section['section_id'] ?>" aria-expanded="<?= $section_idx === 0 ? 'true' : 'false' ?>" aria-controls="sectionCollapse<?= $section['section_id'] ?>">
-                                    <strong>Section <?= $section_idx + 1 ?>:</strong> <?= htmlspecialchars($section['title']) ?>
+                                    <strong>Section <?= $section_idx + 1 ?>:</strong> <?= htmlspecialchars($section['title']) ?> 
                                     <span class="text-muted small ms-2">(Order: <?= htmlspecialchars($section['order']) ?>)</span>
                                 </button>
                             </h2>
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteSectionForms = document.querySelectorAll('.delete-section-form');
     deleteSectionForms.forEach(form => {
         form.addEventListener('submit', function(event) {
-            event.preventDefault();
+            event.preventDefault(); 
             Swal.fire({
                 title: 'Are you sure?',
                 text: "You want to delete this section and all its lessons? This action cannot be undone!",
@@ -672,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    form.submit();
+                    form.submit(); 
                 }
             });
         });
@@ -729,7 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set default lesson type and trigger change to show correct fields
             document.getElementById('lesson_type_modal').value = 'text';
             lessonTypeModal.dispatchEvent(new Event('change'));
-
+            
             lessonModal.show();
         });
     });
@@ -744,7 +744,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('lesson_id_modal_input').value = this.getAttribute('data-lesson-id');
             document.getElementById('section_id_modal_input').value = this.getAttribute('data-section-id');
             document.getElementById('lesson_form_action').value = 'edit_lesson';
-
+            
             document.getElementById('lesson_title_modal').value = this.getAttribute('data-title');
             const lessonType = this.getAttribute('data-type');
             document.getElementById('lesson_type_modal').value = lessonType;
@@ -769,16 +769,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('current_audio_file_modal_display').textContent = 'Current file: ' + filePath.split('/').pop();
                 }
             }
-
+            
             lessonTypeModal.dispatchEvent(new Event('change')); // Show correct fields based on type
             lessonModal.show();
         });
     });
-
+    
     // Handle Delete Lesson Confirmation (add class 'delete-lesson-form' to lesson delete forms)
     document.querySelectorAll('.delete-lesson-form').forEach(form => {
         form.addEventListener('submit', function(event) {
-            event.preventDefault();
+            event.preventDefault(); 
             Swal.fire({
                 title: 'Are you sure?',
                 text: "You want to delete this lesson? This action cannot be undone!",
@@ -789,7 +789,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    form.submit();
+                    form.submit(); 
                 }
             });
         });

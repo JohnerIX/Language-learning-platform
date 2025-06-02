@@ -116,7 +116,7 @@ try {
                 <a href="?filter=rejected" class="btn btn-sm btn-outline-danger <?= $filter === 'rejected' ? 'active' : '' ?>">Rejected</a>
             </div>
         </div>
-
+        
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered" id="dataTableTutors" width="100%" cellspacing="0">
@@ -140,10 +140,10 @@ try {
                                 <td><?= htmlspecialchars($tutor['name']) ?></td>
                                 <td><?= htmlspecialchars($tutor['email']) ?></td>
                                 <td>
-                                    <span class="badge bg-<?=
-                                        $tutor['status'] === 'approved' ? 'success' :
-                                        ($tutor['status'] === 'rejected' ? 'danger' :
-                                        ($tutor['status'] === 'pending' ? 'warning' : 'secondary'))
+                                    <span class="badge bg-<?= 
+                                        $tutor['status'] === 'approved' ? 'success' : 
+                                        ($tutor['status'] === 'rejected' ? 'danger' : 
+                                        ($tutor['status'] === 'pending' ? 'warning' : 'secondary')) 
                                     ?>">
                                         <?= ucfirst(htmlspecialchars($tutor['status'])) ?>
                                     </span>
@@ -162,7 +162,7 @@ try {
                                          <button type="button" class="btn btn-sm btn-secondary" title="View Rejection Reason" data-bs-toggle="modal" data-bs-target="#viewReasonModal<?= $tutor['user_id'] ?>"><i class="fas fa-eye"></i></button>
                                     <?php endif; ?>
                                     <a href="admin-edit-user.php?user_id=<?= $tutor['user_id'] ?>" class="btn btn-sm btn-info" title="Edit User Details"><i class="fas fa-edit"></i></a>
-
+                                    
                                     <!-- Reject Tutor Modal -->
                                     <div class="modal fade" id="rejectTutorModal<?= $tutor['user_id'] ?>" tabindex="-1" aria-labelledby="rejectTutorModalLabel<?= $tutor['user_id'] ?>" aria-hidden="true">
                                       <div class="modal-dialog">
@@ -190,7 +190,7 @@ try {
                                         </form>
                                       </div>
                                     </div>
-
+                                    
                                     <!-- View Rejection Reason Modal -->
                                      <?php if ($tutor['status'] === 'rejected' && !empty($tutor['rejection_reason'])): ?>
                                     <div class="modal fade" id="viewReasonModal<?= $tutor['user_id'] ?>" tabindex="-1" aria-labelledby="viewReasonModalLabel<?= $tutor['user_id'] ?>" aria-hidden="true">

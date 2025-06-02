@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label class="btn btn-outline-dark" for="learner">
                                     <i class="fas fa-user-graduate me-2"></i>Learner
                                 </label>
-
+                                
                                 <input type="radio" class="btn-check" name="role" id="tutor" value="tutor" autocomplete="off">
                                 <label class="btn btn-outline-dark" for="tutor">
                                     <i class="fas fa-chalkboard-teacher me-2"></i>Tutor

@@ -23,7 +23,7 @@ try {
     <?php if ($error): ?>
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
-
+    
     <?php if (isset($_SESSION['success_message'])): ?>
         <script>
             document.addEventListener('DOMContentLoaded', function() {

@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception(ucfirst(str_replace('_', ' ', $field)) . " is required.");
             }
         }
-
+        
         $course_title = sanitize_input($_POST['course_title']);
         $course_language = sanitize_input($_POST['course_language']);
         $course_level = sanitize_input($_POST['course_level']);
@@ -102,9 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Save to database (simplified INSERT)
             $stmt = $conn->prepare("
                 INSERT INTO courses 
-                (tutor_id, title, description, language, level, category, thumbnail_url, price, is_free,
-                 status, created_at, updated_at, duration_minutes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)
+                (tutor_id, title, description, language, level, category, thumbnail_url, price, is_free, 
+                 status, created_at, updated_at, duration_minutes) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?) 
             ");
             
             $stmt->execute([
@@ -208,14 +208,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="course_category" class="form-label fw-bold">Category</label>
-                        <input type="text" class="form-control" id="course_category" name="course_category"
+                        <input type="text" class="form-control" id="course_category" name="course_category" 
                                value="<?= htmlspecialchars($courseData['category'] ?? '') ?>" placeholder="e.g., Business, Technology, Arts">
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="course_description" class="form-label fw-bold">Short Description*</label>
-                    <textarea class="form-control" id="course_description" name="course_description"
+                    <textarea class="form-control" id="course_description" name="course_description" 
                               rows="3" required placeholder="A brief overview of the course (max 200 characters recommended)"><?= htmlspecialchars($courseData['description']) ?></textarea>
                 </div>
             </div>

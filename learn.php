@@ -334,10 +334,10 @@ require __DIR__ . '/includes/header.php';
                                     $final_video_url = $raw_video_url;
                                 } elseif (strpos($raw_video_url, 'uploads/') === 0 || strpos($raw_video_url, '/') === 0) {
                                     $final_video_url = $raw_video_url;
-                                } elseif (strpos($raw_video_url, '/') === false && !empty($raw_video_url)) {
-                                    $final_video_url = 'uploads/course_materials/' . $raw_video_url;
-                                } else {
-                                    $final_video_url = $raw_video_url;
+                                } elseif (strpos($raw_video_url, '/') === false && !empty($raw_video_url)) { 
+                                    $final_video_url = 'uploads/course_materials/' . $raw_video_url; 
+                                } else { 
+                                    $final_video_url = $raw_video_url; 
                                 }
                                 $final_video_url = str_replace('//', '/', $final_video_url);
                                 if (empty($final_video_url) || $final_video_url === 'uploads/course_materials/'){
@@ -352,8 +352,8 @@ require __DIR__ . '/includes/header.php';
                                     $final_audio_url = $raw_audio_url;
                                 } elseif (strpos($raw_audio_url, 'uploads/') === 0 || strpos($raw_audio_url, '/') === 0) {
                                     $final_audio_url = $raw_audio_url;
-                                } elseif (strpos($raw_audio_url, '/') === false && !empty($raw_audio_url)) {
-                                    $final_audio_url = 'uploads/course_materials/' . $raw_audio_url;
+                                } elseif (strpos($raw_audio_url, '/') === false && !empty($raw_audio_url)) { 
+                                    $final_audio_url = 'uploads/course_materials/' . $raw_audio_url; 
                                 } else {
                                     $final_audio_url = $raw_audio_url;
                                 }
@@ -462,7 +462,7 @@ require __DIR__ . '/includes/header.php';
 
                                                 if (empty($final_file_url) || $final_file_url === 'uploads/course_materials/' || $final_file_url === '/') {
                                                     $final_file_url = '#';
-                                                    $file_target = '';
+                                                    $file_target = ''; 
                                                 }
                                             } else {
                                                 $file_target = '';
@@ -476,7 +476,7 @@ require __DIR__ . '/includes/header.php';
                                                 elseif (strpos($file['mime_type'], 'presentation') !== false || strpos($file['mime_type'], 'powerpoint') !== false) $icon_class = 'fa-file-powerpoint text-warning';
                                             }
                                             ?>
-                                            <a href="<?= htmlspecialchars($final_file_url) ?>"
+                                            <a href="<?= htmlspecialchars($final_file_url) ?>" 
                                                class="list-group-item list-group-item-action bg-dark border-success text-light d-flex justify-content-between align-items-center <?= ($final_file_url === '#') ? 'disabled-link' : '' ?>"
                                                <?= ($final_file_url !== '#' && $file_target === '_blank') ? 'target="_blank" rel="noopener noreferrer"' : '' ?>>
                                                 <span class="d-flex align-items-center">
