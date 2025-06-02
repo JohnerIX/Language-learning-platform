@@ -14,23 +14,34 @@ if (session_status() === PHP_SESSION_NONE) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? 'Languages Learn Platform' ?></title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
     <!-- Bootstrap CSS (if needed) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #09d313;
+            --secondary-color: #47ec35;
+            --dark-bg: #000000;
+            --light-text: #f5f5f4;
+            --hover-color: rgb(89, 216, 96);
+            --border-radius: 15px;
+            --transition-speed: 0.3s;
+            }
         /* Navigation Styles */
         nav {
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            padding: 0.5em;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 5%;
-            background-color: #fff;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
+            position: sticky;
+            top: 0;
             z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
         
         .nav-links {
@@ -38,62 +49,80 @@ if (session_status() === PHP_SESSION_NONE) {
             gap: 20px;
             align-items: center;
         }
-        
+
         .image-container {
             position: relative;
+            width: 40px;
+            margin: 10px;
             display: inline-block;
-            text-align: center;
+            transition: transform var(--transition-speed) ease;
         }
         
+
+        .image-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .image-container img {
+            border-radius: var(--border-radius);
+            border: 2px solid transparent;
+            transition: border-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+        }
+
+        .image-container:hover img {
+            border-color: var(--secondary-color);
+        }
         .overlay {
             position: absolute;
-            bottom: -25px;
+            bottom: -40px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+            background: var(--secondary-color);
+            color: var(--dark-bg);
+            width: auto;
+            height: auto;
+            border-radius: 15px;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+            pointer-events: none;
             white-space: nowrap;
+            font-weight: bold;
         }
-        
+
         .image-container:hover .overlay {
             opacity: 1;
-        }
-        
-        .dropdown-container {
-            position: relative;
-            display: inline-block;
+            transform: translateX(-50%) translateY(-5px);
         }
         
         .dropdown-content {
             display: none;
             position: absolute;
-            right: 0;
             background-color: #f9f9f9;
             min-width: 160px;
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             z-index: 1;
-            border-radius: 4px;
+            border-radius: 5px;
+            overflow: hidden;
+            font-weight: bold;
         }
-        
+
+        .dropdown-container:hover .dropdown-content {
+            display: block;
+        }
+
         .dropdown-content a {
             color: black;
             padding: 12px 16px;
             text-decoration: none;
             display: block;
-            font-size: 14px;
+            transition: background-color 0.3s;
         }
-        
+
         .dropdown-content a:hover {
-            background-color: #f1f1f1;
-        }
-        
-        .dropdown-container:hover .dropdown-content {
-            display: block;
+            background-color: #65ee77;
         }
         
         .menu-toggle {
@@ -155,9 +184,6 @@ if (session_status() === PHP_SESSION_NONE) {
             }
         }
     </style>
-    <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <nav>
@@ -183,10 +209,8 @@ if (session_status() === PHP_SESSION_NONE) {
                     <div class="dropdown-content">
                         <a href="profile.php">My Profile</a>
                         <a href="logout.php">Logout</a>
-                        <?php if ($_SESSION['user_role'] === 'learner'): ?>
-                            <a href="dashboard.php">My Learning</a>
-                        <?php elseif ($_SESSION['user_role'] === 'admin'): ?>
-                            <a href="admin-dashboard.php">Admin Dashboard</a>
+                        <?php if ($_SESSION['user_role'] === 'admin'): ?>
+                            <a href="admin-dashboard.php">Admin Panel</a>
                         <?php elseif ($_SESSION['user_role'] === 'tutor'): ?>
                             <a href="tutor-dashboard.php">Tutor Dashboard</a>
                         <?php endif; ?>
@@ -216,9 +240,7 @@ if (session_status() === PHP_SESSION_NONE) {
                 <div class="overlay">Menu</div>
                 <div class="dropdown-content">
                     <a href="contact.php">Help</a> 
-                    <a href="lessons.php?language=luganda">Luganda lessons</a>
-                    <a href="lessons.php?language=runyankole">Runyankole lessons</a>
-                    <a href="lessons.php?language=luo">Luo lessons</a>
+                    <a href="courses.php">Courses</a>
                     <a href="index.php#foot">Follow Us</a>
                     <a href="https://wa.me/+256773855888">Direct chat</a>
                 </div>

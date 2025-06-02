@@ -530,9 +530,9 @@ try {
                 </td>
               </tr>
               <tr>
-                <td>-</td>
-                <td>Contact us to read about terms and conditions.</td>
-                <td>-</td>
+                <td></td>
+                <td></td>
+                <td></td>
               </tr>
             </tbody>
           </table>

@@ -50,9 +50,7 @@
                 <div class="overlay">Menu</div>
                 <div class="dropdown-content">
                     <a href="contact.php">Help</a> 
-                    <a href="lessons.php">Luganda lessons</a>
-                    <a href="lessons1.php">Runya-kitala lessons</a>
-                    <a href="lessons2.php">Luo lessons</a>
+                    <a href="courses.php">Lessons</a>
                     <a href="home3.html#foot">Follow Us</a>
                     <a href="https://wa.me/+256773855888">Direct chat</a>
                 </div>
