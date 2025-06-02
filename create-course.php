@@ -12,41 +12,49 @@ $pageTitle = "Create New Course";
 require __DIR__ . '/includes/header.php';
 
 // Initialize variables
-$error = '';
-$success = false;
+$error = ''; // Will be set to $_SESSION['error_message'] before redirect
+$success = false; // Will be set to $_SESSION['success_message'] before redirect
 $courseData = [
     'title' => '',
     'language' => '',
     'level' => '',
+    'category' => '', // Added category
     'description' => '',
     'price' => 0,
     'is_free' => 0,
-    'duration_hours' => 0,
-    'duration_minutes' => 30
+    // duration_hours and duration_minutes removed
 ];
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // CSRF verification
-        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-            throw new Exception("Invalid CSRF token");
+        if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
+            throw new Exception("Invalid CSRF token.");
         }
 
-        // Basic validation
+        // Basic validation for simplified form
         $requiredFields = ['course_title', 'course_language', 'course_level', 'course_description'];
         foreach ($requiredFields as $field) {
             if (empty($_POST[$field])) {
-                throw new Exception("All required fields must be filled");
+                throw new Exception(ucfirst(str_replace('_', ' ', $field)) . " is required.");
             }
         }
 
-        // Process thumbnail upload
-        $thumbnailPath = '';
+        $course_title = sanitize_input($_POST['course_title']);
+        $course_language = sanitize_input($_POST['course_language']);
+        $course_level = sanitize_input($_POST['course_level']);
+        $course_category = sanitize_input($_POST['course_category'] ?? null);
+        $course_description = sanitize_input($_POST['course_description']);
+
+        // Process thumbnail upload (remains largely the same)
+        $thumbnailPath = null; // Set to null if not uploaded or error
         if (isset($_FILES['course_thumbnail']) && $_FILES['course_thumbnail']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = __DIR__ . '/uploads/course_thumbs/';
             if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+                if (!mkdir($uploadDir, 0755, true)) {
+                    throw new Exception("Failed to create thumbnail upload directory.");
+                }
             }
             
             $fileExt = strtolower(pathinfo($_FILES['course_thumbnail']['name'], PATHINFO_EXTENSION));
@@ -54,24 +62,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $maxSize = 2 * 1024 * 1024; // 2MB
             
             if (!in_array($fileExt, $allowedTypes)) {
-                throw new Exception("Only JPG, PNG, and GIF images are allowed");
+                throw new Exception("Only JPG, JPEG, PNG, and GIF images are allowed for thumbnail.");
             }
             
             if ($_FILES['course_thumbnail']['size'] > $maxSize) {
-                throw new Exception("Thumbnail must be less than 2MB");
+                throw new Exception("Thumbnail image must be less than 2MB.");
             }
             
-            $fileName = uniqid() . '_' . basename($_FILES['course_thumbnail']['name']);
+            $fileName = uniqid('thumb_', true) . '.' . $fileExt; // More unique filename
             $targetPath = $uploadDir . $fileName;
             
             if (!move_uploaded_file($_FILES['course_thumbnail']['tmp_name'], $targetPath)) {
-                throw new Exception("Failed to upload thumbnail");
+                throw new Exception("Failed to upload thumbnail image.");
             }
-            
-            $thumbnailPath = '/uploads/course_thumbs/' . $fileName;
-        } else {
-            throw new Exception("Course thumbnail is required");
+            $thumbnailPath = 'uploads/course_thumbs/' . $fileName; // Relative path for DB
+        } else if ($_FILES['course_thumbnail']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // Handle other upload errors specifically if needed
+            throw new Exception("Error uploading thumbnail: " . $_FILES['course_thumbnail']['error']);
         }
+        // Thumbnail is optional for draft, but if provided, must be valid.
+        // If no thumbnail, $thumbnailPath remains null.
 
         // Process pricing
         $price = isset($_POST['course_price']) ? floatval($_POST['course_price']) : 0;
@@ -80,131 +90,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $price = 0;
         }
 
-        // Process duration
-        $duration_hours = (int)$_POST['duration_hours'];
-        $duration_minutes = (int)$_POST['duration_minutes'];
-        $total_minutes = ($duration_hours * 60) + $duration_minutes;
-
-        // Determine status
-        $status = isset($_POST['publish']) ? 'pending' : 'draft';
+        // Duration is removed, will be calculated later or set in edit-course.php
+        // Status is always 'draft' now
+        $status = 'draft';
+        $duration_minutes = 0; // Default to 0 or NULL
 
         // Begin transaction
         $conn->beginTransaction();
 
         try {
-            // Save to database
+            // Save to database (simplified INSERT)
             $stmt = $conn->prepare("
                 INSERT INTO courses 
-                (tutor_id, title, language, level, description, thumbnail_url, price, is_free, 
-                 duration_minutes, status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                (tutor_id, title, description, language, level, category, thumbnail_url, price, is_free,
+                 status, created_at, updated_at, duration_minutes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)
             ");
             
             $stmt->execute([
                 $_SESSION['user_id'],
-                $_POST['course_title'],
-                $_POST['course_language'],
-                $_POST['course_level'],
-                $_POST['course_description'],
-                $thumbnailPath,
+                $course_title,
+                $course_description,
+                $course_language,
+                $course_level,
+                $course_category,
+                $thumbnailPath, // This can be NULL if no thumbnail was uploaded
                 $price,
                 $isFree,
-                $total_minutes,
-                $status
+                $status, // 'draft'
+                $duration_minutes // 0 or NULL
             ]);
 
-            $courseId = $conn->lastInsertId();
+            $new_course_id = $conn->lastInsertId();
 
-            // Process curriculum if exists
-            if (!empty($_POST['sections'])) {
-                $sections = json_decode($_POST['sections'], true);
-                
-                foreach ($sections as $section) {
-                    $stmt = $conn->prepare("
-                        INSERT INTO course_sections 
-                        (course_id, title, `order`)
-                        VALUES (?, ?, ?)
-                    ");
-                    $stmt->execute([$courseId, $section['title'], $section['order']]);
-                    $sectionId = $conn->lastInsertId();
-
-                    // Process lessons
-                    if (!empty($section['lessons'])) {
-                        foreach ($section['lessons'] as $lesson) {
-                            $stmt = $conn->prepare("
-                                INSERT INTO lessons 
-                                (course_id, section_id, title, `order`, lesson_type, content)
-                                VALUES (?, ?, ?, ?, ?, ?)
-                            ");
-                            $stmt->execute([
-                                $courseId,
-                                $sectionId,
-                                $lesson['title'],
-                                $lesson['order'],
-                                $lesson['type'],
-                                $lesson['content'] ?? null
-                            ]);
-                        }
-                    }
-                }
-            }
-
-            // Process materials uploads
-            if (!empty($_FILES['materials']['name'][0])) {
-                $uploadDir = __DIR__ . '/uploads/course_materials/';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
-                }
-                
-                foreach ($_FILES['materials']['tmp_name'] as $index => $tmpName) {
-                    if ($_FILES['materials']['error'][$index] === UPLOAD_ERR_OK) {
-                        $fileName = uniqid() . '_' . basename($_FILES['materials']['name'][$index]);
-                        $targetPath = $uploadDir . $fileName;
-                        
-                        if (move_uploaded_file($tmpName, $targetPath)) {
-                            $stmt = $conn->prepare("
-                                INSERT INTO course_materials 
-                                (course_id, file_name, file_path, file_type)
-                                VALUES (?, ?, ?, ?)
-                            ");
-                            $stmt->execute([
-                                $courseId,
-                                $_FILES['materials']['name'][$index],
-                                '/uploads/course_materials/' . $fileName,
-                                $_POST['material_types'][$index]
-                            ]);
-                        }
-                    }
-                }
-            }
+            // No curriculum or materials processing here anymore
 
             // Commit transaction
             $conn->commit();
 
-            $_SESSION['success_message'] = $status === 'pending' 
-                ? 'Course submitted for approval!' 
-                : 'Draft saved successfully!';
-            header("Location: tutor-dashboard.php");
+            $_SESSION['success_message'] = "Course basics saved as draft! Now, let's add content and structure it.";
+            header("Location: edit-course.php?id=" . $new_course_id); // Redirect to edit page
             exit();
 
         } catch (Exception $e) {
             $conn->rollBack();
-            throw $e;
+            // Log detailed error for admin
+            error_log("DB Error in create-course.php: " . $e->getMessage());
+            // Set user-friendly error message
+            $_SESSION['error_message'] = "Database operation failed: " . $e->getMessage();
+            // No redirect here, let the catch block below handle form repopulation and error display
+            throw $e; // Re-throw to be caught by the outer catch
         }
 
     } catch (Exception $e) {
-        $error = $e->getMessage();
-        // Preserve form data
+        $_SESSION['error_message'] = $e->getMessage();
+        // Preserve form data for repopulation
         $courseData = [
             'title' => $_POST['course_title'] ?? '',
             'language' => $_POST['course_language'] ?? '',
             'level' => $_POST['course_level'] ?? '',
+            'category' => $_POST['course_category'] ?? '',
             'description' => $_POST['course_description'] ?? '',
             'price' => $_POST['course_price'] ?? 0,
             'is_free' => isset($_POST['is_free']) ? 1 : 0,
-            'duration_hours' => $_POST['duration_hours'] ?? 0,
-            'duration_minutes' => $_POST['duration_minutes'] ?? 30
         ];
+        // No redirect here, error will be displayed on the same page by SweetAlert
     }
 }
 ?>
@@ -256,27 +206,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="Advanced" <?= $courseData['level'] === 'Advanced' ? 'selected' : '' ?>>Advanced</option>
                         </select>
                     </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="course_category" class="form-label fw-bold">Category</label>
+                        <input type="text" class="form-control" id="course_category" name="course_category"
+                               value="<?= htmlspecialchars($courseData['category'] ?? '') ?>" placeholder="e.g., Business, Technology, Arts">
+                    </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="course_description" class="form-label fw-bold">Description*</label>
-                    <ul class="nav nav-tabs" id="descriptionTabs">
-                        <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#editTab">Edit</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#previewTab">Preview</button>
-                        </li>
-                    </ul>
-                    <div class="tab-content border p-3 bg-white">
-                        <div class="tab-pane fade show active" id="editTab">
-                            <textarea class="form-control" id="course_description" name="course_description" 
-                                      rows="5" required><?= htmlspecialchars($courseData['description']) ?></textarea>
-                        </div>
-                        <div class="tab-pane fade" id="previewTab">
-                            <div id="descriptionPreview" class="rendered-markdown"></div>
-                        </div>
-                    </div>
+                    <label for="course_description" class="form-label fw-bold">Short Description*</label>
+                    <textarea class="form-control" id="course_description" name="course_description"
+                              rows="3" required placeholder="A brief overview of the course (max 200 characters recommended)"><?= htmlspecialchars($courseData['description']) ?></textarea>
                 </div>
             </div>
         </div>
@@ -300,30 +240,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="progress-bar" role="progressbar" style="width: 0%"></div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Course Duration -->
-        <div class="card mb-4 border-dark">
-            <div class="card-header bg-dark text-white">
-                <h4><i class="fas fa-clock me-2"></i> Estimated Duration</h4>
-            </div>
-            <div class="card-body bg-light">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Hours</label>
-                        <input type="number" name="duration_hours" class="form-control" 
-                               value="<?= $courseData['duration_hours'] ?>" min="0" max="100">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Minutes</label>
-                        <input type="number" name="duration_minutes" class="form-control" 
-                               value="<?= $courseData['duration_minutes'] ?>" min="0" max="59">
-                    </div>
-                </div>
-                <p class="text-muted">Estimated total: <span id="durationDisplay">
-                    <?= $courseData['duration_hours'] ?>h <?= $courseData['duration_minutes'] ?>m
-                </span></p>
             </div>
         </div>
 
@@ -362,66 +278,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
 
-        <!-- Course Materials -->
-        <div class="card mb-4 border-dark">
-            <div class="card-header bg-dark text-white">
-                <h4><i class="fas fa-file-alt me-2"></i> Course Materials</h4>
-            </div>
-            <div class="card-body bg-light">
-                <div id="materialUploads">
-                    <div class="material-upload mb-3 border p-3 bg-white rounded">
-                        <div class="mb-2">
-                            <label class="form-label">File</label>
-                            <input type="file" name="materials[]" class="form-control">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">Type</label>
-                            <select name="material_types[]" class="form-select">
-                                <option value="pdf">PDF</option>
-                                <option value="video">Video</option>
-                                <option value="audio">Audio</option>
-                                <option value="image">Image</option>
-                            </select>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-material">
-                            <i class="fas fa-trash"></i> Remove
-                        </button>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="addMaterial">
-                    <i class="fas fa-plus me-1"></i> Add Material
-                </button>
-            </div>
-        </div>
-
-        <!-- Curriculum Builder -->
-        <div class="card mb-4 border-dark">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h4><i class="fas fa-list-ol me-2"></i> Course Curriculum</h4>
-                <button type="button" class="btn btn-sm btn-success" id="addSectionBtn">
-                    <i class="fas fa-plus me-1"></i> Add Section
-                </button>
-            </div>
-            <div class="card-body bg-light">
-                <div id="curriculumSections" class="sortable-sections">
-                    <!-- Sections will be added here -->
-                </div>
-            </div>
-        </div>
-
         <!-- Submit Buttons -->
         <div class="d-flex justify-content-between mb-5">
             <a href="tutor-dashboard.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i> Cancel
             </a>
-            <div class="btn-group">
-                <button type="submit" name="save_draft" class="btn btn-secondary">
-                    <i class="fas fa-save me-2"></i> Save Draft
-                </button>
-                <button type="submit" name="publish" class="btn btn-success">
-                    <i class="fas fa-paper-plane me-2"></i> Publish
-                </button>
-            </div>
+            <button type="submit" name="create_course" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i> Create Course and Add Content
+            </button>
         </div>
     </form>
 </div>
@@ -485,287 +349,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<!-- Include required libraries -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@4.0.0/marked.min.js"></script>
-
 <script>
+// Placeholder for any simple JS needed for the simplified form.
+// For example, thumbnail preview if kept.
 document.addEventListener('DOMContentLoaded', function() {
-    // Character Counter
-    document.getElementById('course_title').addEventListener('input', function() {
-        document.getElementById('titleCounter').textContent = this.value.length;
-    });
-
-    // Description Preview
-    document.getElementById('course_description').addEventListener('input', function() {
-        document.getElementById('descriptionPreview').innerHTML = marked.parse(this.value);
-    });
-
-    // Duration Calculation
-    const durationHours = document.querySelector('input[name="duration_hours"]');
-    const durationMinutes = document.querySelector('input[name="duration_minutes"]');
-    const durationDisplay = document.getElementById('durationDisplay');
-    
-    function updateDurationDisplay() {
-        const hours = parseInt(durationHours.value) || 0;
-        const mins = parseInt(durationMinutes.value) || 0;
-        durationDisplay.textContent = `${hours}h ${mins}m`;
-    }
-    
-    durationHours.addEventListener('input', updateDurationDisplay);
-    durationMinutes.addEventListener('input', updateDurationDisplay);
-
-    // Pricing Toggle
-    const priceInput = document.getElementById('course_price');
-    const isFreeCheckbox = document.getElementById('is_free');
-    const pricePreview = document.getElementById('pricePreview');
-    
-    isFreeCheckbox.addEventListener('change', function() {
-        priceInput.disabled = this.checked;
-        updatePricePreview();
-    });
-    
-    priceInput.addEventListener('input', updatePricePreview);
-    
-    function updatePricePreview() {
-        pricePreview.textContent = isFreeCheckbox.checked ? 'FREE' : 
-            `UGX ${parseInt(priceInput.value).toLocaleString()}`;
+    // Basic character counter for title (if needed)
+    const courseTitleInput = document.getElementById('course_title');
+    if (courseTitleInput) {
+        const titleCounter = document.getElementById('titleCounter');
+        if (titleCounter) {
+            courseTitleInput.addEventListener('input', function() {
+                titleCounter.textContent = this.value.length;
+            });
+        }
     }
 
-    // Thumbnail Upload
-    const thumbnailUpload = document.getElementById('course_thumbnail');
-    const thumbnailPreview = document.getElementById('thumbnailPreview');
+    // Basic thumbnail preview (if #course_thumbnail and #thumbnailPreview exist)
+    const thumbnailInput = document.getElementById('course_thumbnail');
+    const thumbnailPreviewImg = document.getElementById('thumbnailPreview');
     const thumbnailUploadArea = document.getElementById('thumbnailUploadArea');
-    const uploadProgress = document.getElementById('uploadProgress');
-    
-    thumbnailUploadArea.addEventListener('click', () => thumbnailUpload.click());
-    thumbnailUpload.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                thumbnailPreview.src = e.target.result;
-                thumbnailPreview.classList.remove('d-none');
-                thumbnailUploadArea.querySelector('.upload-prompt').classList.add('d-none');
-            };
-            reader.readAsDataURL(file);
-            
-            // Show progress
-            uploadProgress.classList.remove('d-none');
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 10;
-                uploadProgress.querySelector('.progress-bar').style.width = `${progress}%`;
-                if (progress >= 100) clearInterval(interval);
-            }, 200);
-        }
-    });
 
-    // Materials Upload
-    document.getElementById('addMaterial').addEventListener('click', function() {
-        const newUpload = document.createElement('div');
-        newUpload.className = 'material-upload mb-3 border p-3 bg-white rounded';
-        newUpload.innerHTML = `
-            <div class="mb-2">
-                <label class="form-label">File</label>
-                <input type="file" name="materials[]" class="form-control">
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Type</label>
-                <select name="material_types[]" class="form-select">
-                    <option value="pdf">PDF</option>
-                    <option value="video">Video</option>
-                    <option value="audio">Audio</option>
-                    <option value="image">Image</option>
-                </select>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-danger remove-material">
-                <i class="fas fa-trash"></i> Remove
-            </button>
-        `;
-        document.getElementById('materialUploads').appendChild(newUpload);
-        
-        // Add remove handler
-        newUpload.querySelector('.remove-material').addEventListener('click', function() {
-            newUpload.remove();
-        });
-    });
-
-    // Curriculum Builder
-    let sectionCount = 0;
-    let lessonCount = 0;
-    const curriculumSections = document.getElementById('curriculumSections');
-    
-    // Initialize sortable sections
-    const sortableSections = new Sortable(curriculumSections, {
-        animation: 150,
-        handle: '.handle',
-        ghostClass: 'sortable-ghost',
-        onEnd: function() {
-            updateSectionOrders();
-        }
-    });
-    
-    // Add new section
-    document.getElementById('addSectionBtn').addEventListener('click', addNewSection);
-    
-    function addNewSection() {
-        sectionCount++;
-        const sectionId = `section-${sectionCount}`;
-        const sectionTemplate = document.getElementById('sectionTemplate').cloneNode(true);
-        const sectionElement = sectionTemplate.content || sectionTemplate;
-        
-        const sectionNode = sectionElement.querySelector('.section');
-        sectionNode.id = sectionId;
-        sectionNode.dataset.order = sectionCount;
-        
-        const clone = sectionNode.cloneNode(true);
-        curriculumSections.appendChild(clone);
-        
-        // Initialize sortable for lessons in this section
-        const lessonsList = clone.querySelector('.lessons-list');
-        new Sortable(lessonsList, {
-            animation: 150,
-            handle: '.handle',
-            ghostClass: 'sortable-ghost',
-            onEnd: function() {
-                updateLessonOrders(lessonsList);
+    if (thumbnailUploadArea && thumbnailInput) {
+        thumbnailUploadArea.addEventListener('click', () => thumbnailInput.click());
+        thumbnailInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file && thumbnailPreviewImg) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    thumbnailPreviewImg.src = e.target.result;
+                    thumbnailPreviewImg.classList.remove('d-none');
+                    if (thumbnailUploadArea.querySelector('.upload-prompt')) {
+                        thumbnailUploadArea.querySelector('.upload-prompt').classList.add('d-none');
+                    }
+                };
+                reader.readAsDataURL(file);
             }
         });
-        
-        // Add event listeners
-        clone.querySelector('.remove-section').addEventListener('click', function() {
-            if (confirm('Delete this section and all its lessons?')) {
-                clone.remove();
-                updateSectionOrders();
+    }
+    
+    // Pricing toggle (if #is_free and #course_price exist)
+    const isFreeCheckbox = document.getElementById('is_free');
+    const priceInput = document.getElementById('course_price');
+    if (isFreeCheckbox && priceInput) {
+        isFreeCheckbox.addEventListener('change', function() {
+            priceInput.disabled = this.checked;
+            if (this.checked) {
+                priceInput.value = '0';
             }
         });
-        
-        clone.querySelector('.add-lesson').addEventListener('click', function() {
-            addNewLesson(lessonsList);
-        });
+        // Initial state
+        priceInput.disabled = isFreeCheckbox.checked;
     }
-    
-    // Add new lesson
-    function addNewLesson(container) {
-        lessonCount++;
-        const lessonId = `lesson-${lessonCount}`;
-        const lessonTemplate = document.getElementById('lessonTemplate').cloneNode(true);
-        const lessonElement = lessonTemplate.content || lessonTemplate;
-        
-        const lessonNode = lessonElement.querySelector('.lesson-item');
-        lessonNode.id = lessonId;
-        lessonNode.dataset.order = container.children.length + 1;
-        
-        const clone = lessonNode.cloneNode(true);
-        container.appendChild(clone);
-        
-        // Handle lesson type change
-        const typeSelect = clone.querySelector('.lesson-type');
-        typeSelect.addEventListener('change', function() {
-            // Hide all content types
-            clone.querySelectorAll('.lesson-content-upload > div').forEach(el => {
-                el.style.display = 'none';
-            });
-            
-            // Show selected type
-            const type = this.value;
-            if (type === 'video' || type === 'audio') {
-                clone.querySelector(`.${type}-upload`).style.display = 'block';
-            } else if (type === 'text') {
-                clone.querySelector('.text-content').style.display = 'block';
-            }
-        });
-        
-        // Trigger initial change
-        typeSelect.dispatchEvent(new Event('change'));
-        
-        // Handle file upload progress
-        const fileInput = clone.querySelector('.video-file');
-        if (fileInput) {
-            fileInput.addEventListener('change', function() {
-                const progressBar = clone.querySelector('.video-progress');
-                progressBar.classList.remove('d-none');
-                
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 10;
-                    progressBar.querySelector('.progress-bar').style.width = `${progress}%`;
-                    if (progress >= 100) clearInterval(interval);
-                }, 200);
-            });
-        }
-        
-        // Remove lesson
-        clone.querySelector('.remove-lesson').addEventListener('click', function() {
-            clone.remove();
-            updateLessonOrders(container);
-        });
-    }
-    
-    // Update section orders
-    function updateSectionOrders() {
-        document.querySelectorAll('.section').forEach((section, index) => {
-            section.dataset.order = index + 1;
-        });
-    }
-    
-    // Update lesson orders
-    function updateLessonOrders(container) {
-        container.querySelectorAll('.lesson-item').forEach((lesson, index) => {
-            lesson.dataset.order = index + 1;
-        });
-    }
-    
-    // Prepare form data for submission
-    document.getElementById('courseForm').addEventListener('submit', function(e) {
-        // Prepare curriculum data
-        const sections = [];
-        document.querySelectorAll('.section').forEach((section, sectionIndex) => {
-            const sectionTitle = section.querySelector('.section-title').value;
-            if (!sectionTitle) return;
-            
-            const lessons = [];
-            section.querySelectorAll('.lesson-item').forEach((lesson, lessonIndex) => {
-                const lessonTitle = lesson.querySelector('.lesson-title').value;
-                const lessonType = lesson.querySelector('.lesson-type').value;
-                let lessonContent = '';
-                
-                if (lessonType === 'text') {
-                    lessonContent = lesson.querySelector('.text-content').value;
-                } else if (lessonType === 'video' || lessonType === 'audio') {
-                    // In a real app, you'd handle file uploads here
-                    lessonContent = 'File would be uploaded here';
-                }
-                
-                if (lessonTitle) {
-                    lessons.push({
-                        title: lessonTitle,
-                        type: lessonType,
-                        content: lessonContent,
-                        order: lessonIndex + 1
-                    });
-                }
-            });
-            
-            sections.push({
-                title: sectionTitle,
-                order: sectionIndex + 1,
-                lessons: lessons
-            });
-        });
-        
-        // Add hidden input for curriculum data
-        const curriculumInput = document.createElement('input');
-        curriculumInput.type = 'hidden';
-        curriculumInput.name = 'sections';
-        curriculumInput.value = JSON.stringify(sections);
-        this.appendChild(curriculumInput);
-    });
-    
-    // Add initial section
-    addNewSection();
 });
 </script>
 

@@ -169,13 +169,13 @@ require __DIR__ . '/includes/header.php';
                 } elseif (!preg_match('~^https?://~i', $final_thumbnail_url_detail)) { // Not a URL and not a valid constructed path
                     $final_thumbnail_url_detail = 'images/default-course.jpg'; // Reset to default if construction is suspect
                 }
-                
+
                 // Final check for empty or base path only
                 if (empty($final_thumbnail_url_detail) || $final_thumbnail_url_detail === 'uploads/course_thumbs/') {
                     $final_thumbnail_url_detail = 'images/default-course.jpg';
                 }
                 ?>
-                <img src="<?= htmlspecialchars($final_thumbnail_url_detail) ?>" 
+                <img src="<?= htmlspecialchars($final_thumbnail_url_detail) ?>"
                      class="img-fluid rounded" 
                      alt="<?= htmlspecialchars($course['title']) ?>"
                      style="background-color: #f0f0f0;"
