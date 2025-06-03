@@ -30,7 +30,7 @@
               <a href="#login/signup"><img src="images/profilepic.jpg" alt="Profile" width="35" height="35"></a>
               <div class="overlay">Sign In</div>
               <div class="dropdown-content">
-                  <a href="login.php">Login/SignUp</a> 
+                  <a href="login.php">Login/SignUp</a>
                   <a href="profile.php">My profile</a>
               </div>
           </div>
@@ -49,7 +49,7 @@
                 <a href="#menu"><img src="images/menu.jpg" alt="Menu" width="35" height="35" class="image-container"></a>
                 <div class="overlay">Menu</div>
                 <div class="dropdown-content">
-                    <a href="contact.php">Help</a> 
+                    <a href="contact.php">Help</a>
                     <a href="lessons.php">Luganda lessons</a>
                     <a href="lessons1.php">Runya-kitala lessons</a>
                     <a href="lessons2.php">Luo lessons</a>
@@ -2134,7 +2134,7 @@
             <td><a href="home.php">Home </a> <br>
                 <a href="contact.php">Contact Us </a> <br>
                 <a href="about.php">About Us </a> <br>
-                <a href="connect.php">Connect </a> <br> 
+                <a href="connect.php">Connect </a> <br>
                 <a href="menu.php">Main menu </a> <br>
                 <a href="login.php">Subscribe now </a></td>
             <td><div class="social-links">

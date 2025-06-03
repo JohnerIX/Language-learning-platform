@@ -42,7 +42,7 @@ try {
     if (!empty($conditions)) {
         $sql .= " WHERE " . implode(" AND ", $conditions);
     }
-    
+
     $sql .= " ORDER BY c.is_featured DESC, c.created_at DESC"; // Featured courses first
 
     $stmt = $conn->prepare($sql);
@@ -65,8 +65,8 @@ try {
     <div class="row mb-4">
         <div class="col-md-8 offset-md-2">
             <form action="courses.php" method="GET" class="d-flex">
-                <input type="text" name="search_term" class="form-control me-2" 
-                       placeholder="Search for courses (e.g., title, keyword)" 
+                <input type="text" name="search_term" class="form-control me-2"
+                       placeholder="Search for courses (e.g., title, keyword)"
                        value="<?= htmlspecialchars($_GET['search_term'] ?? '') ?>">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-search"></i> Search
@@ -132,7 +132,7 @@ try {
                         $final_thumbnail_url = 'images/default-course.jpg';
                     }
                     ?>
-                    <img src="<?= htmlspecialchars($final_thumbnail_url) ?>" 
+                    <img src="<?= htmlspecialchars($final_thumbnail_url) ?>"
                          class="card-img-top" 
                          alt="<?= htmlspecialchars($course['title']) ?>"
                          style="height: 200px; object-fit: cover; background-color: #f0f0f0;"
@@ -154,7 +154,7 @@ try {
                                     <i class="fas fa-play-circle"></i> Start Learning
                                 </a>
                             <?php else: ?>
-                                <a href="course-details.php?id=<?= $course['course_id'] ?>" 
+                                <a href="course-details.php?id=<?= $course['course_id'] ?>"
                                    class="btn btn-primary w-100">
                                     <i class="fas fa-info-circle"></i> View Details & Subscribe
                                 </a>

@@ -69,14 +69,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="site_name" class="form-label">Site Name</label>
-                            <input type="text" class="form-control" id="site_name" name="site_name" 
+                            <input type="text" class="form-control" id="site_name" name="site_name"
                                    value="<?= htmlspecialchars($current_settings['site_name']) ?>">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="site_email" class="form-label">Default Admin Email</label>
-                            <input type="email" class="form-control" id="site_email" name="site_email" 
+                            <input type="email" class="form-control" id="site_email" name="site_email"
                                    value="<?= htmlspecialchars($current_settings['site_email']) ?>">
                         </div>
                     </div>
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="items_per_page" class="form-label">Items Per Page (for pagination)</label>
-                            <input type="number" class="form-control" id="items_per_page" name="items_per_page" 
+                            <input type="number" class="form-control" id="items_per_page" name="items_per_page"
                                    value="<?= htmlspecialchars($current_settings['items_per_page']) ?>" min="1">
                         </div>
                     </div>
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="mb-3">
                             <label class="form-label">Maintenance Mode</label>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="maintenance_mode" 
+                                <input class="form-check-input" type="checkbox" role="switch" id="maintenance_mode"
                                        name="maintenance_mode" <?= $current_settings['maintenance_mode'] ? 'checked' : '' ?>>
                                 <label class="form-check-label" for="maintenance_mode">Enable Maintenance Mode</label>
                             </div>
@@ -102,9 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
                 </div>
-                
+
                 <hr>
-                
+
                 <h5 class="mt-4 mb-3">Email Settings (Placeholder)</h5>
                 <div class="row">
                     <div class="col-md-6">
