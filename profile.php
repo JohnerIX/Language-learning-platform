@@ -244,12 +244,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     <?php else: ?>
                         <div class="row">
-                            <?php foreach ($courses as $course): 
+                            <?php foreach ($courses as $course):
                                 $percentage = ($course['total_lessons'] > 0) ? round(($course['completed_lessons'] / $course['total_lessons']) * 100) : 0;
                             ?>
                             <div class="col-md-6 mb-3">
                                 <div class="card h-100">
-                                    <img src="<?= htmlspecialchars($course['thumbnail_url'] ?? 'images/default_course.jpg') ?>" 
+                                    <img src="<?= htmlspecialchars($course['thumbnail_url'] ?? 'images/default_course.jpg') ?>"
                                          class="card-img-top" 
                                          style="height: 150px; object-fit: cover;"
                                          alt="<?= htmlspecialchars($course['title']) ?>">
@@ -257,9 +257,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <h6 class="card-title"><?= htmlspecialchars($course['title']) ?></h6>
                                         <div class="progress mb-2" style="height: 5px;">
                                             <div class="progress-bar bg-success" role="progressbar"
-                                                 style="width: <?= $percentage ?>%" 
-                                                 aria-valuenow="<?= $percentage ?>" 
-                                                 aria-valuemin="0" 
+                                                 style="width: <?= $percentage ?>%"
+                                                 aria-valuenow="<?= $percentage ?>"
+                                                 aria-valuemin="0"
                                                  aria-valuemax="100">
                                             </div>
                                         </div>
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </small>
                                     </div>
                                     <div class="card-footer bg-transparent border-top-0">
-                                        <a href="learn.php?course_id=<?= $course['course_id'] ?>" 
+                                        <a href="learn.php?course_id=<?= $course['course_id'] ?>"
                                            class="btn btn-sm btn-outline-primary w-100 mt-2">
                                             Continue Learning
                                         </a>
