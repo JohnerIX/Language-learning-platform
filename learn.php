@@ -13,6 +13,7 @@ error_log("GET lesson: " . ($_GET['lesson'] ?? 'NOT SET'));
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/functions.php';
 
 // Debug after includes
 error_log("After includes - SESSION user_id: " . ($_SESSION['user_id'] ?? 'STILL NOT SET'));
@@ -22,17 +23,17 @@ if (!isset($_SESSION['user_id'])) {
     error_log("REDIRECT TRIGGERED: User not logged in");
     $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
     $_SESSION['error'] = "Please login to access courses";
-    die("<div style='background:red;color:white;padding:20px;'>DEBUG: Would redirect to login.php here. User ID not set in session.</div>");
-    // header("Location: login.php");
-    // exit();
+    // die("<div style='background:red;color:white;padding:20px;'>DEBUG: Would redirect to login.php here. User ID not set in session.</div>");
+    header("Location: login.php");
+    exit();
 }
 
 if (!isset($_GET['course_id']) || !is_numeric($_GET['course_id'])) {
     error_log("REDIRECT TRIGGERED: Invalid course_id - " . ($_GET['course_id'] ?? 'NULL'));
     $_SESSION['error'] = "Invalid course specified";
-    die("<div style='background:red;color:white;padding:20px;'>DEBUG: Would redirect to courses.php here. Invalid course_id: " . htmlspecialchars($_GET['course_id'] ?? 'NULL') . "</div>");
-    // header("Location: courses.php");
-    // exit();
+    // die("<div style='background:red;color:white;padding:20px;'>DEBUG: Would redirect to courses.php here. Invalid course_id: " . htmlspecialchars($_GET['course_id'] ?? 'NULL') . "</div>");
+    header("Location: courses.php");
+    exit();
 }
 
 $course_id = (int)$_GET['course_id'];
@@ -54,9 +55,9 @@ try {
     if (!$subscriptionExists) {
         error_log("REDIRECT TRIGGERED: User not enrolled in course");
         $_SESSION['error'] = "You're not enrolled in this course";
-        die("<div style='background:red;color:white;padding:20px;'>DEBUG: Would redirect to course-details.php here. User {$_SESSION['user_id']} not enrolled in course $course_id</div>");
-        // header("Location: course-details.php?id=$course_id");
-        // exit();
+        // die("<div style='background:red;color:white;padding:20px;'>DEBUG: Would redirect to course-details.php here. User {$_SESSION['user_id']} not enrolled in course $course_id</div>");
+        header("Location: course-details.php?id=$course_id");
+        exit();
     }
 
     // Get course details
@@ -72,7 +73,9 @@ try {
 
     if (!$course) {
         error_log("ERROR: Course not found for course_id: $course_id");
-        die("<div style='background:red;color:white;padding:20px;'>Course not found!</div>");
+        $_SESSION['error'] = "The requested course was not found.";
+        header("Location: courses.php");
+        exit();
     }
 
     // Get all course sections
@@ -100,9 +103,9 @@ try {
         if (!$current_lesson) {
             error_log("REDIRECT TRIGGERED: Lesson not found");
             $_SESSION['error'] = "Lesson not found";
-            die("<div style='background:red;color:white;padding:20px;'>DEBUG: Would redirect to learn.php?course_id=$course_id here. Lesson $lesson_id not found.</div>");
-            // header("Location: learn.php?course_id=$course_id");
-            // exit();
+            // die("<div style='background:red;color:white;padding:20px;'>DEBUG: Would redirect to learn.php?course_id=$course_id here. Lesson $lesson_id not found.</div>");
+            header("Location: learn.php?course_id=$course_id");
+            exit();
         }
 
         // Record lesson progress
@@ -116,7 +119,7 @@ try {
 
     // Get all lessons with progress
     $stmt = $conn->prepare("
-        SELECT l.lesson_id, l.title, l.duration, l.section_id, 
+        SELECT l.lesson_id, l.title, l.duration, l.section_id, l.lesson_type,
                lp.completed_at, lp.last_accessed,
                COUNT(q.quiz_id) AS has_quiz
         FROM lessons l
@@ -148,9 +151,9 @@ try {
     error_log("DATABASE ERROR: " . $e->getMessage());
     error_log("SQLSTATE: " . $e->getCode());
     $_SESSION['error'] = "Error loading course content: " . $e->getMessage();
-    die("<div style='background:red;color:white;padding:20px;'>DATABASE ERROR: " . htmlspecialchars($e->getMessage()) . "</div>");
-    // header("Location: courses.php");
-    // exit();
+    // die("<div style='background:red;color:white;padding:20px;'>DATABASE ERROR: " . htmlspecialchars($e->getMessage()) . "</div>");
+    header("Location: courses.php");
+    exit();
 }
 
 // Debug before rendering page
@@ -248,13 +251,38 @@ require __DIR__ . '/includes/header.php';
                                                    class="d-flex justify-content-between align-items-center text-decoration-none p-2 rounded
                                                           <?= $current_lesson && $lesson['lesson_id'] == $current_lesson['lesson_id'] ? 'bg-success bg-opacity-10 text-success fw-bold' : 'text-light' ?>">
                                                     <span class="d-flex align-items-center">
-                                                        <?php if ($lesson['completed_at']): ?>
-                                                            <i class="fas fa-check-circle text-success me-3"></i>
+                                                        <?php // Progress Icon
+                                                        if ($lesson['completed_at']): ?>
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
                                                         <?php elseif ($lesson['last_accessed']): ?>
-                                                            <i class="fas fa-play-circle text-warning me-3"></i>
+                                                            <i class="fas fa-play-circle text-warning me-2"></i>
                                                         <?php else: ?>
-                                                            <i class="far fa-circle me-3 text-muted"></i>
+                                                            <i class="far fa-circle text-muted me-2"></i>
                                                         <?php endif; ?>
+
+                                                        <?php // Lesson Type Icon
+                                                        $lesson_type_icon_class = 'fas fa-question-circle text-muted'; // Default
+                                                        $lesson_type_title = 'Unknown type';
+                                                        if (isset($lesson['lesson_type'])) {
+                                                            $lesson_type_title = ucfirst(str_replace('_', ' ', $lesson['lesson_type']));
+                                                            switch ($lesson['lesson_type']) {
+                                                                case 'text':
+                                                                    $lesson_type_icon_class = 'fas fa-file-alt text-info';
+                                                                    break;
+                                                                case 'pdf_file':
+                                                                    $lesson_type_icon_class = 'fas fa-file-pdf text-danger';
+                                                                    break;
+                                                                case 'video_url':
+                                                                    $lesson_type_icon_class = 'fas fa-video text-warning';
+                                                                    break;
+                                                                case 'audio_file':
+                                                                    $lesson_type_icon_class = 'fas fa-volume-up text-primary';
+                                                                    break;
+                                                            }
+                                                        }
+                                                        ?>
+                                                        <i class="<?= $lesson_type_icon_class ?> me-2" title="<?= $lesson_type_title ?>"></i>
+
                                                         <?= htmlspecialchars($lesson['title']) ?>
                                                     </span>
                                                     <span class="badge bg-<?= $lesson['has_quiz'] ? 'info' : 'secondary' ?> rounded-pill">
@@ -323,12 +351,37 @@ require __DIR__ . '/includes/header.php';
                     <div class="card bg-dark border-success mb-4">
                         <div class="card-body p-4">
                             <?php
-                            $has_video = !empty($current_lesson['video_url']);
-                            $has_audio = !empty($current_lesson['audio_url']);
+                            $lesson_type = $current_lesson['lesson_type'] ?? 'text'; // Default to text
+                            $is_pdf_lesson = false;
+                            $final_pdf_url = '';
+
+                            // Initialize based on lesson type
+                            $has_video = false;
+                            $has_audio = false;
                             $has_text_content = !empty(trim($current_lesson['content']));
 
+                            if ($lesson_type === 'pdf_file' && !empty($current_lesson['file_path'])) {
+                                $is_pdf_lesson = true;
+                                $raw_pdf_url = $current_lesson['file_path'];
+                                if (preg_match('~^https?://~i', $raw_pdf_url)) {
+                                    $final_pdf_url = $raw_pdf_url;
+                                } elseif (strpos($raw_pdf_url, 'uploads/course_materials/') === 0) {
+                                    $final_pdf_url = $raw_pdf_url;
+                                } elseif (strpos($raw_pdf_url, '/') === false && !empty($raw_pdf_url)) {
+                                    $final_pdf_url = 'uploads/course_materials/' . $raw_pdf_url;
+                                } else {
+                                    $final_pdf_url = $raw_pdf_url; // Assume it might be a relative path or needs specific handling
+                                }
+                                $final_pdf_url = str_replace('//', '/', $final_pdf_url);
+                                if (empty($final_pdf_url) || $final_pdf_url === 'uploads/course_materials/') {
+                                    $final_pdf_url = ''; // Invalidate
+                                    $is_pdf_lesson = false; // Cannot be a PDF lesson without a valid path
+                                }
+                            }
+
                             $final_video_url = '';
-                            if ($has_video) {
+                            if ($lesson_type === 'video_url' && !empty($current_lesson['video_url'])) {
+                                $has_video = true;
                                 $raw_video_url = $current_lesson['video_url'];
                                 if (preg_match('~^https?://~i', $raw_video_url)) {
                                     $final_video_url = $raw_video_url;
@@ -343,11 +396,37 @@ require __DIR__ . '/includes/header.php';
                                 if (empty($final_video_url) || $final_video_url === 'uploads/course_materials/'){
                                     $final_video_url = ''; // Invalidate if it's just the base path or empty
                                 }
+                                // YouTube URL transformation
+                                if (preg_match('/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/', $final_video_url, $matches)) {
+                                    $final_video_url = 'https://www.youtube.com/embed/' . $matches[1];
+                                } elseif (preg_match('/youtu\.be\/([a-zA-Z0-9_-]+)/', $final_video_url, $matches)) {
+                                    $final_video_url = 'https://www.youtube.com/embed/' . $matches[1];
+                                }
                             }
 
                             $final_audio_url = '';
-                            if ($has_audio) {
+                            if ($lesson_type === 'audio_file' && !empty($current_lesson['file_path'])) {
+                                $has_audio = true;
+                                $raw_audio_url = $current_lesson['file_path'];
+                                // Path construction logic similar to PDF
+                                if (preg_match('~^https?://~i', $raw_audio_url)) {
+                                    $final_audio_url = $raw_audio_url;
+                                } elseif (strpos($raw_audio_url, 'uploads/course_materials/') === 0) {
+                                    $final_audio_url = $raw_audio_url;
+                                } elseif (strpos($raw_audio_url, '/') === false && !empty($raw_audio_url)) {
+                                    $final_audio_url = 'uploads/course_materials/' . $raw_audio_url;
+                                } else {
+                                    $final_audio_url = $raw_audio_url;
+                                }
+                                $final_audio_url = str_replace('//', '/', $final_audio_url);
+                                if (empty($final_audio_url) || $final_audio_url === 'uploads/course_materials/') {
+                                    $final_audio_url = ''; // Invalidate
+                                    $has_audio = false; // No audio if path is invalid
+                                }
+                            } elseif (!empty($current_lesson['audio_url'])) { // Fallback for existing audio_url field if not audio_file type
+                                $has_audio = true;
                                 $raw_audio_url = $current_lesson['audio_url'];
+                                // Existing path logic for audio_url
                                 if (preg_match('~^https?://~i', $raw_audio_url)) {
                                     $final_audio_url = $raw_audio_url;
                                 } elseif (strpos($raw_audio_url, 'uploads/') === 0 || strpos($raw_audio_url, '/') === 0) {
@@ -360,6 +439,7 @@ require __DIR__ . '/includes/header.php';
                                 $final_audio_url = str_replace('//', '/', $final_audio_url);
                                 if (empty($final_audio_url) || $final_audio_url === 'uploads/course_materials/'){
                                      $final_audio_url = ''; // Invalidate
+                                     $has_audio = false;
                                 }
                             }
 
@@ -383,15 +463,25 @@ require __DIR__ . '/includes/header.php';
                             }
                             ?>
 
-                            <?php if ($has_video && !empty($final_video_url)): ?>
-                                <div class="ratio ratio-16x9 mb-4 rounded overflow-hidden border border-success">
-                                    <video controls class="w-100 bg-black" 
-                                           poster="<?= htmlspecialchars($final_poster_url) ?>"
-                                           onerror="this.poster='images/default-course.jpg';">
-                                        <source src="<?= htmlspecialchars($final_video_url) ?>" type="video/mp4">
-                                        <p class="text-light bg-dark p-2">Your browser doesn't support HTML5 video. If video does not load, the source might be unavailable or in an unsupported format.</p>
-                                    </video>
+                            <?php if ($is_pdf_lesson && !empty($final_pdf_url)): ?>
+                                <div class="ratio ratio-4x3 mb-4 rounded overflow-hidden border border-success">
+                                    <iframe src="<?= htmlspecialchars($final_pdf_url) ?>" title="<?= htmlspecialchars($current_lesson['title']) ?>" allowfullscreen></iframe>
                                 </div>
+                            <?php elseif ($has_video && !empty($final_video_url)): ?>
+                                <?php if (strpos($final_video_url, 'youtube.com/embed') !== false): ?>
+                                    <div class="ratio ratio-16x9 mb-4 rounded overflow-hidden border border-success">
+                                        <iframe src="<?= htmlspecialchars($final_video_url) ?>" title="<?= htmlspecialchars($current_lesson['title']) ?>" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="ratio ratio-16x9 mb-4 rounded overflow-hidden border border-success">
+                                        <video controls class="w-100 bg-black"
+                                               poster="<?= htmlspecialchars($final_poster_url) ?>"
+                                               onerror="this.poster='images/default-course.jpg';">
+                                            <source src="<?= htmlspecialchars($final_video_url) ?>" type="video/mp4">
+                                            <p class="text-light bg-dark p-2">Your browser doesn't support HTML5 video. If video does not load, the source might be unavailable or in an unsupported format.</p>
+                                        </video>
+                                    </div>
+                                <?php endif; ?>
                             <?php elseif ($has_audio && !empty($final_audio_url)): ?>
                                 <div class="mb-4 p-3 bg-black rounded border border-success">
                                     <audio controls class="w-100">
@@ -405,9 +495,9 @@ require __DIR__ . '/includes/header.php';
                             <div class="lesson-content mb-4 p-3 bg-black rounded border border-success text-light">
                                 <?php if ($has_text_content): ?>
                                     <?= $current_lesson['content'] // Assuming this is HTML or safe to output directly ?>
-                                <?php elseif (!$has_video && !$has_audio): ?>
-                                    <p class="text-muted">No content (video, audio, or text) available for this lesson.</p>
-                                <?php elseif ($has_video || $has_audio): ?>
+                                <?php elseif (!$is_pdf_lesson && !$has_video && !$has_audio): ?>
+                                    <p class="text-muted">No content (PDF, video, audio, or text) available for this lesson.</p>
+                                <?php elseif ($is_pdf_lesson || $has_video || $has_audio): ?>
                                     <p class="text-muted">No additional textual content for this lesson. Please refer to the media above.</p>
                                 <?php endif; ?>
                             </div>
@@ -513,22 +603,30 @@ require __DIR__ . '/includes/header.php';
                     <!-- Navigation Buttons -->
                     <div class="d-flex justify-content-between mt-4">
                         <?php
-                        // Find previous lesson
-                        $prev_lesson = null;
-                        $found_current = false;
-                        foreach ($lessons as $lesson) {
-                            if ($found_current && $lesson['section_id'] == $current_lesson['section_id']) {
-                                $prev_lesson = $lesson;
-                                break;
+                        // Global Previous/Next Lesson Logic
+                        $current_lesson_index = -1;
+                        if ($current_lesson) {
+                            foreach ($lessons as $index => $lesson_item) {
+                                if ($lesson_item['lesson_id'] == $current_lesson['lesson_id']) {
+                                    $current_lesson_index = $index;
+                                    break;
+                                }
                             }
-                            if ($lesson['lesson_id'] == $current_lesson['lesson_id']) {
-                                $found_current = true;
-                            }
+                        }
+
+                        $prev_lesson_global = null;
+                        if ($current_lesson_index > 0) {
+                            $prev_lesson_global = $lessons[$current_lesson_index - 1];
+                        }
+
+                        $next_lesson_global = null;
+                        if ($current_lesson_index !== -1 && $current_lesson_index < (count($lessons) - 1)) {
+                            $next_lesson_global = $lessons[$current_lesson_index + 1];
                         }
                         ?>
                         
-                        <?php if ($prev_lesson): ?>
-                            <a href="learn.php?course_id=<?= $course_id ?>&lesson=<?= $prev_lesson['lesson_id'] ?>" 
+                        <?php if ($prev_lesson_global): ?>
+                            <a href="learn.php?course_id=<?= $course_id ?>&lesson=<?= $prev_lesson_global['lesson_id'] ?>"
                                class="btn btn-outline-success px-4">
                                 <i class="fas fa-arrow-left me-2"></i> Previous
                             </a>
@@ -537,35 +635,22 @@ require __DIR__ . '/includes/header.php';
                                 <i class="fas fa-arrow-left me-2"></i> Previous
                             </span>
                         <?php endif; ?>
-
-                        <?php
-                        // Find next lesson
-                        $next_lesson = null;
-                        $found_current = false;
-                        foreach (array_reverse($lessons) as $lesson) {
-                            if ($found_current && $lesson['section_id'] == $current_lesson['section_id']) {
-                                $next_lesson = $lesson;
-                                break;
-                            }
-                            if ($lesson['lesson_id'] == $current_lesson['lesson_id']) {
-                                $found_current = true;
-                            }
-                        }
-                        ?>
                         
-                        <?php if ($next_lesson): ?>
-                            <a href="learn.php?course_id=<?= $course_id ?>&lesson=<?= $next_lesson['lesson_id'] ?>" 
+                        <?php if ($next_lesson_global): ?>
+                            <a href="learn.php?course_id=<?= $course_id ?>&lesson=<?= $next_lesson_global['lesson_id'] ?>"
                                class="btn btn-success px-4">
                                 Next <i class="fas fa-arrow-right ms-2"></i>
                             </a>
                         <?php else: ?>
+                            <?php // If there is no next lesson, it's the end of the course. ?>
                             <form method="post" action="mark-complete.php" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                                 <input type="hidden" name="course_id" value="<?= $course_id ?>">
                                 <input type="hidden" name="lesson_id" value="<?= $current_lesson['lesson_id'] ?>">
+                                <?php // Also ensure the current lesson is marked complete, then perhaps a course completion action ?>
                                 <button type="submit" name="action" value="complete" 
                                         class="btn btn-success px-4">
-                                    Complete Section <i class="fas fa-check ms-2"></i>
+                                    Complete Course <i class="fas fa-check-double ms-2"></i>
                                 </button>
                             </form>
                         <?php endif; ?>
@@ -621,16 +706,5 @@ require __DIR__ . '/includes/header.php';
 <?php 
 require __DIR__ . '/includes/footer.php';
 
-// Helper function to format file sizes
-function formatFileSize($bytes) {
-    if ($bytes >= 1073741824) {
-        return number_format($bytes / 1073741824, 2) . ' GB';
-    } elseif ($bytes >= 1048576) {
-        return number_format($bytes / 1048576, 2) . ' MB';
-    } elseif ($bytes >= 1024) {
-        return number_format($bytes / 1024, 2) . ' KB';
-    } else {
-        return $bytes . ' bytes';
-    }
-}
+// formatFileSize function has been moved to functions.php
 ?>
