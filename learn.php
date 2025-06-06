@@ -698,6 +698,27 @@ require __DIR__ . '/includes/header.php';
                     sidebar.classList.toggle('show');
                 });
             }
+
+            // New: Seamless sidebar navigation with auto-pause
+            const sidebarLessonLinks = document.querySelectorAll('#courseAccordion .list-group-item a');
+
+            sidebarLessonLinks.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    // Find any active video or audio elements in the main content area
+                    const activeVideo = document.querySelector('.lesson-content video:not([paused])');
+                    const activeAudio = document.querySelector('.lesson-content audio:not([paused])');
+
+                    if (activeVideo) {
+                        console.log('Pausing active video'); // Optional: for debugging
+                        activeVideo.pause();
+                    }
+
+                    if (activeAudio) {
+                        console.log('Pausing active audio'); // Optional: for debugging
+                        activeAudio.pause();
+                    }
+                });
+            });
         });
     </script>
 </body>
