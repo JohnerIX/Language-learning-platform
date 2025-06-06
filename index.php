@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/includes/config.php'; // Ensures $conn is available
 
+$pageTitle = "Browse Courses";
+require __DIR__ . '/includes/header.php';
+
 $featured_courses = [];
 $fetch_error = null;
 try {
@@ -115,63 +118,7 @@ try {
     </style>
 </head>
 <body>
-    <nav>
-        <div class="logo">
-            <img src="images/logollp.png" alt="Learn Lugha Logo" width="160" height="60">
-        </div>
-        
-        <div class="nav-links">
-            <div class="image-container">
-                <a href="home.php"><img src="images/home.jpg" alt="Home" width="35" height="35"></a>
-                <div class="overlay">Home</div>
-            </div>
-            
-            <div class="image-container">
-                <a href="about.php"><img src="images/about.jpg" alt="About Us" width="35" height="35"></a>
-                <div class="overlay">About</div>
-            </div>
-                
-            <div class="dropdown-container">
-                <a href="#login/signup"><img src="images/profilepic.jpg" alt="Profile" width="35" height="35"></a>
-                <div class="overlay">Sign In</div>
-                <div class="dropdown-content">
-                    <a href="login.php">Login</a> 
-                    <a href="signup.php">Sign Up</a>
-                    <a href="profile.php">My profile</a>
-                </div>
-            </div>
-                
-            <div class="image-container">
-                <a href="contact.php"><img src="images/contact.jpg" alt="Contact" width="35" height="35"></a>
-                <div class="overlay">Contact</div>
-            </div>    
-                
-            <div class="image-container">
-                <a href="connect.php"><img src="images/connz.png" alt="Connect" width="35" height="35"></a>
-                <div class="overlay">Connect</div>
-            </div>
-                
-            <div class="dropdown-container" id="menu">
-                <a href="#menu"><img src="images/menu.jpg" alt="Menu" width="35" height="35" class="image-container"></a>
-                <div class="overlay">Menu</div>
-                <div class="dropdown-content">
-                    <a href="contact.php">Help</a> 
-                    <a href="lessons.php">Luganda lessons</a>
-                    <a href="lessons1.php">Runya-kitala lessons</a>
-                    <a href="lessons2.php">Luo lessons</a>
-                    <a href="home3.php#foot">Follow Us</a>
-                    <a href="https://wa.me/+256773855888">Direct chat</a>
-                </div>
-            </div>
-        </div>
-        
-        <button id="theme-toggle" class="theme-toggle" onclick="toggleDarkMode()">🌙</button>
-        <div class="menu-toggle">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    </nav>
+   
 
     <!-- Google Translate Container -->
     <div class="translate-container">
