@@ -264,6 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
                 }
             } elseif ($lesson_type === 'pdf_file' || $lesson_type === 'audio_file') {
                 $file_input_name = ($lesson_type === 'pdf_file') ? 'lesson_pdf_file' : 'lesson_audio_file';
+                $material_upload_dir = __DIR__ . '/uploads/course_materials/'; // Define it here
 
                 if (isset($_FILES[$file_input_name]) && $_FILES[$file_input_name]['error'] === UPLOAD_ERR_OK) {
                     if (!is_dir($material_upload_dir)) {
@@ -556,6 +557,7 @@ require __DIR__ . '/includes/header.php';
                                     $stmt_lessons->execute([$section['section_id']]);
                                     $lessons_data = $stmt_lessons->fetchAll(PDO::FETCH_ASSOC);
                                     ?>
+                                    <h6 class="mt-3">Lessons:</h6>
                                     <?php if (empty($lessons_data)): ?>
                                         <p class="text-muted">No lessons in this section yet.</p>
                                     <?php else: ?>
@@ -594,28 +596,11 @@ require __DIR__ . '/includes/header.php';
                                             <?php endforeach; ?>
                                         </ul>
                                     <?php endif; ?>
-                                    <div class="mt-3">
-                                         <button class="btn btn-sm btn-outline-primary me-2 edit-section-btn"
-                                                data-bs-toggle="modal" data-bs-target="#editSectionModal"
-                                                data-section-id="<?= $section['section_id'] ?>"
-                                                data-section-title="<?= htmlspecialchars($section['title']) ?>"
-                                                data-section-order="<?= htmlspecialchars($section['order']) ?>">
-                                            <i class="fas fa-edit"></i> Edit Section Details
-                                        </button>
-                                        <form method="POST" action="edit-course.php?id=<?= $course['course_id'] ?>&active_tab=content" class="d-inline delete-section-form">
-                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                            <input type="hidden" name="form_action" value="delete_section">
-                                            <input type="hidden" name="section_id" value="<?= $section['section_id'] ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger me-2">
-                                                <i class="fas fa-trash"></i> Delete Entire Section
-                                            </button>
-                                        </form>
-                                        <button class="btn btn-sm btn-success add-lesson-btn" type="button"
-                                                data-bs-toggle="modal" data-bs-target="#lessonEditorModal"
-                                                data-section-id="<?= $section['section_id'] ?>">
-                                            <i class="fas fa-plus"></i> Add Lesson to this Section
-                                        </button>
-                                    </div>
+                                    <button class="btn btn-sm btn-success add-lesson-btn" type="button"
+                                            data-bs-toggle="modal" data-bs-target="#lessonEditorModal"
+                                            data-section-id="<?= $section['section_id'] ?>">
+                                        <i class="fas fa-plus"></i> Add Lesson to this Section
+                                    </button>
                                 </div>
                             </div>
                         </div>
