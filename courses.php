@@ -136,7 +136,7 @@ try {
                          class="card-img-top" 
                          alt="<?= htmlspecialchars($course['title']) ?>"
                          style="height: 200px; object-fit: cover; background-color: #f0f0f0;"
-                         onerror="this.onerror=null; this.src='images/default-course.jpg';"> // JS fallback for broken images
+                         onerror="this.onerror=null; this.src='images/default-course.jpg';">
                     
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
