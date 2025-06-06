@@ -149,21 +149,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action'])) {
                     $_SESSION['info_message'] = "No changes were made to the course details.";
                  }
             }
-        }
     }
-            // ... (existing update_details logic from previous step, assumed to be here)
-            // Ensure this part also correctly refreshes $course variable if details change.
-             if (!isset($_SESSION['error_message'])) {
-                $_SESSION['success_message'] = "Course details updated successfully!";
-                // Refresh course data after update
-                $stmt_refresh = $conn->prepare("SELECT * FROM courses WHERE course_id = ?");
-                $stmt_refresh->execute([$course_id]);
-                $course = $stmt_refresh->fetch(PDO::FETCH_ASSOC);
-            }
-            header("Location: edit-course.php?id=" . $course_id); // Stays on details tab by default
-            exit();
+    // ... (existing update_details logic from previous step, assumed to be here)
+    // Ensure this part also correctly refreshes $course variable if details change.
+    if (!isset($_SESSION['error_message'])) {
+        $_SESSION['success_message'] = "Course details updated successfully!";
+        // Refresh course data after update
+        $stmt_refresh = $conn->prepare("SELECT * FROM courses WHERE course_id = ?");
+        $stmt_refresh->execute([$course_id]);
+        $course = $stmt_refresh->fetch(PDO::FETCH_ASSOC);
+    }
+    header("Location: edit-course.php?id=" . $course_id); // Stays on details tab by default
+    exit();
 
-        } elseif ($action === 'add_section') {
+    } elseif ($action === 'add_section') {
             $section_title = sanitize_input($_POST['section_title']);
             $section_order = !empty($_POST['section_order']) ? (int)$_POST['section_order'] : null;
 
